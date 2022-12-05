@@ -1,0 +1,53 @@
+{
+  "name": "coopang-backend",
+  "version": "0.1.0",
+  "description": "coopang-backend",
+  "homepage": "https://github.com/rmfpdlxmtidl/coopang-backend#readme",
+  "bugs": {
+    "url": "https://github.com/rmfpdlxmtidl/coopang-backend/issues",
+    "email": "gwak2837@kakao.com"
+  },
+  "license": "GPL-3.0-only",
+  "author": "Taeuk Gwak <gwak2837@kakao.com>",
+  "main": "dist/index.js",
+  "repository": "https://github.com/rmfpdlxmtidl/coopang-backend.git",
+  "scripts": {
+    "dev": "src/dev.sh",
+    "build": "NODE_ENV=production node esbuild.js",
+    "start": "NODE_ENV=production node -r dotenv/config dist/index.js dotenv_config_path=.env.local",
+    "clean": "rm -rf .yarn/cache .yarn/unplugged .yarn/install-state.gz out .pnp.*",
+    "lint": "eslint . --fix --ignore-path .gitignore",
+    "format": "prettier . --write",
+    "pgtyped": "database/pgtyped.sh",
+    "export": "tsc --project database/tsconfig.json && node database/dist/export.js",
+    "import": "tsc --project database/tsconfig.json && node database/dist/import.js",
+    "postinstall": "husky install"
+  },
+  "dependencies": {
+    "pg": "^8.8.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.6.5",
+    "@typescript-eslint/eslint-plugin": "latest",
+    "@typescript-eslint/parser": "latest",
+    "eslint": "^8.29.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-config-standard": "latest",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-jest": "^27.1.6",
+    "eslint-plugin-n": "^15.0.0",
+    "eslint-plugin-promise": "^6.0.0",
+    "husky": "^8.0.0",
+    "prettier": "2.8.0",
+    "typescript": "^4.9.3"
+  },
+  "engines": {
+    "node": ">=18.2.0"
+  },
+  "private": true,
+  "packageManager": "yarn@3.3.0",
+  "resolutions": {
+    "gaxios/node-fetch": "^3.2.10"
+  },
+  "type": "module"
+}
