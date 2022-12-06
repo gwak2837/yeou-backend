@@ -415,15 +415,177 @@ declare module '*.sql' {
 yarn add fastify
 ```
 
-`src/routes/user.ts` 파일을 생성합니다:
+`src/routes/index.ts` 파일을 생성합니다:
 
 ```ts
+import Fastify from 'fastify'
 
+import { K_SERVICE, NODE_ENV, PORT, PROJECT_ENV } from '../common/constants'
+import productRoute from './product'
+import userRoute from './user'
+
+const fastify = Fastify({
+  logger: NODE_ENV === 'production',
+})
+
+fastify.register(productRoute)
+fastify.register(userRoute)
+
+export default async function startServer() {
+  try {
+    await fastify.listen({ port: +PORT, host: K_SERVICE ? '0.0.0.0' : 'localhost' })
+  } catch (err) {
+    fastify.log.error(err)
+    throw new Error()
+  }
+}
 ```
 
-### Script: dev
+`.vscode/typescript.code-snippets` 파일을 생성합니다:
 
-https://stackoverflow.com/a/35455532/16868717 \
+```json
+{
+  "Fastify Routes": {
+    "prefix": "routes",
+    "body": [
+      "import { FastifyInstance } from 'fastify'",
+      "",
+      "export default async function routes(fastify: FastifyInstance, options: object) {",
+      "  fastify.get('/${TM_FILENAME_BASE}', async (request, reply) => {",
+      "    return { hello: '${TM_FILENAME_BASE}' }",
+      "  })",
+      "}",
+      ""
+    ],
+    "description": "Fastify Routes"
+  }
+}
+```
+
+`src/routes/product.ts` 파일을 생성하고 `routes` 단축어를 입력해 아래 코드를 자동 완성합니다:
+
+```ts
+import { FastifyInstance } from 'fastify'
+
+export default async function routes(fastify: FastifyInstance, options: object) {
+  fastify.get('/product', async (request, reply) => {
+    return { hello: 'product' }
+  })
+}
+```
+
+`src/routes/user.ts` 파일을 생성하고 `routes` 단축어를 입력해 아래 코드를 자동 완성합니다:
+
+```ts
+import { FastifyInstance } from 'fastify'
+
+export default async function routes(fastify: FastifyInstance, options: object) {
+  fastify.get('/user', async (request, reply) => {
+    return { hello: 'user' }
+  })
+}
+```
+
+`src/common/constants.ts` 파일을 생성합니다:
+
+```ts
+export const NODE_ENV = process.env.NODE_ENV as string
+export const PROJECT_ENV = process.env.PROJECT_ENV as string
+export const K_SERVICE = process.env.K_SERVICE as string
+export const PORT = process.env.PORT as string
+```
+
+### Fastify + HTTP2
+
+> https://www.fastify.io/docs/latest/Reference/HTTP2/
+
+`src/routes/index.ts` 파일을 수정합니다:
+
+```ts
+import { ..., LOCALHOST_HTTPS_CERT, LOCALHOST_HTTPS_KEY, PROJECT_ENV } from '../common/constants'
+
+const fastify = Fastify({
+  ...
+
+  http2: true,
+  ...(PROJECT_ENV.startsWith('local') && {
+    https: {
+      key: `-----BEGIN PRIVATE KEY-----\n${LOCALHOST_HTTPS_KEY}\n-----END PRIVATE KEY-----`,
+      cert: `-----BEGIN CERTIFICATE-----\n${LOCALHOST_HTTPS_CERT}\n-----END CERTIFICATE-----`,
+    },
+  }),
+})
+```
+
+`src/common/constants.ts` 파일을 수정합니다:
+
+```ts
+...
+export const LOCALHOST_HTTPS_KEY = process.env.LOCALHOST_HTTPS_KEY as string
+export const LOCALHOST_HTTPS_CERT = process.env.LOCALHOST_HTTPS_CERT as string
+```
+
+### Fastify + CORS
+
+> https://github.com/fastify/fastify-cors
+
+```bash
+yarn add @fastify/cors
+```
+
+`src/routes/index.ts` 파일을 수정합니다:
+
+```ts
+import cors from '@fastify/cors'
+
+...
+
+export default async function startServer() {
+  await fastify.register(cors, {
+    origin: ['http://localhost:3000'],
+  })
+
+  ...
+}
+```
+
+### Fastify + Prevent DoS
+
+> https://github.com/fastify/fastify-rate-limit
+
+```bash
+yarn add @fastify/rate-limit
+```
+
+`src/routes/index.ts` 파일을 수정합니다:
+
+```ts
+import rateLimit from '@fastify/rate-limit'
+
+...
+
+export default async function startServer() {
+  await fastify.register(rateLimit, {
+    ...(NODE_ENV === 'development' && {
+      allowList: ['127.0.0.1'],
+    }),
+  })
+
+  ...
+}
+```
+
+### Fastify + JWT
+
+### Fastify + Swagger
+
+```bash
+yarn add @fastify/swagger
+```
+
+### Fastify + Schema
+
+### Fastify + File uploader
 
 ### PostgreSQL
 
@@ -469,3 +631,7 @@ yarn add --dev @pgtyped/cli @pgtyped/query
   ...
 }
 ```
+
+### Script: dev
+
+https://stackoverflow.com/a/35455532/16868717 \
