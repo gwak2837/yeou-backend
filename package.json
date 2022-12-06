@@ -9,12 +9,12 @@
   },
   "license": "GPL-3.0-only",
   "author": "Taeuk Gwak <gwak2837@kakao.com>",
-  "main": "dist/index.js",
+  "main": "out/index.cjs",
   "repository": "https://github.com/rmfpdlxmtidl/coopang-backend.git",
   "scripts": {
     "dev": "src/dev.sh",
     "build": "NODE_ENV=production node esbuild.js",
-    "start": "NODE_ENV=production node -r dotenv/config dist/index.js dotenv_config_path=.env.local",
+    "start": "NODE_ENV=production node -r dotenv/config out/index.cjs dotenv_config_path=.env.local",
     "clean": "rm -rf .yarn/cache .yarn/unplugged .yarn/install-state.gz out .pnp.*",
     "lint": "eslint . --fix --ignore-path .gitignore",
     "format": "prettier . --write",
@@ -24,12 +24,14 @@
     "postinstall": "husky install"
   },
   "dependencies": {
+    "fastify": "^4.10.2",
     "pg": "^8.8.0"
   },
   "devDependencies": {
     "@types/pg": "^8.6.5",
     "@typescript-eslint/eslint-plugin": "latest",
     "@typescript-eslint/parser": "latest",
+    "esbuild": "^0.15.18",
     "eslint": "^8.29.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-config-standard": "latest",

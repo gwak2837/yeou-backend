@@ -338,7 +338,92 @@ yarn tsc
 
 ### esbuild
 
+> https://esbuild.github.io/getting-started/#bundling-for-node \
+> https://esbuild.github.io/api/#metafile
+
+```bash
+yarn add --dev esbuild
+```
+
+`esbuild.js` 파일을 생성합니다:
+
+```js
+import esbuild from 'esbuild'
+
+const NODE_ENV = process.env.NODE_ENV
+
+const buildResult = esbuild.buildSync({
+  bundle: true,
+  entryPoints: ['src/index.ts'],
+  loader: {
+    '.sql': 'text',
+  },
+  metafile: true,
+  minify: NODE_ENV === 'production',
+  outfile: 'out/index.cjs',
+  platform: 'node',
+  target: ['node18'],
+  treeShaking: true,
+  watch: NODE_ENV === 'development' && {
+    onRebuild: (error, result) => {
+      if (error) {
+        console.error('watch build failed:', error)
+      } else {
+        showOutfilesSize(result)
+      }
+    },
+  },
+})
+
+showOutfilesSize(buildResult)
+
+function showOutfilesSize(result) {
+  const outputs = result.metafile.outputs
+  for (const output in outputs) {
+    console.log(`${output}: ${(outputs[output].bytes / 1_000_000).toFixed(2)} MB`)
+  }
+}
+```
+
+`package.json` 파일을 수정합니다:
+
+```json
+{
+  "scripts": {
+    "build": "NODE_ENV=production node esbuild.js",
+    "start": "NODE_ENV=production node -r dotenv/config out/index.cjs dotenv_config_path=.env.local",
+    ...
+  },
+  ...
+}
+```
+
+`src/global-env.d.ts` 파일을 생성합니다:
+
+```ts
+declare module '*.sql' {
+  const content: string
+  export default content
+}
+```
+
 ### Fastify
+
+> https://www.fastify.io/docs/latest/Guides/Getting-Started/ \
+
+```bash
+yarn add fastify
+```
+
+`src/routes/user.ts` 파일을 생성합니다:
+
+```ts
+
+```
+
+### Script: dev
+
+https://stackoverflow.com/a/35455532/16868717 \
 
 ### PostgreSQL
 
