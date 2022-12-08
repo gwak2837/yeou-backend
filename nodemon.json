@@ -1,0 +1,4 @@
+{
+  "ext": "cjs",
+  "watch": ["out"]
+}

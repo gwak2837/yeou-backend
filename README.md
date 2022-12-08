@@ -1,5 +1,7 @@
 # 쿠팡 가격 알리미
 
+쿠팡, 다나와, 오늘의집
+
 ## 💻 개발 환경
 
 - macOS 12.6
@@ -7,7 +9,7 @@
 - [Yarn](https://yarnpkg.com/getting-started/install#install-corepack) 3.3
 - [Git](https://git-scm.com/download) 2.38
 
-## ☁ Cloud
+## ☁ 클라우드
 
 - [Vercel](https://vercel.com)
 - [Google Cloud Run](https://cloud.google.com/run)
@@ -16,7 +18,248 @@
 - [Google Container Registry](https://cloud.google.com/container-registry)
 - [Oracle Virtual Machine](https://www.oracle.com/kr/cloud/compute/virtual-machines/)
 
-## 📦 과정
+## 📦 설치
+
+### 소스코드 다운로드
+
+프로젝트 소스코드를 다운로드 받고 의존 패키지를 설치합니다.
+
+```
+git clone https://github.com/rmfpdlxmtidl/jayudam-backend.git
+cd jayudam-backend
+yarn
+```
+
+### PostgreSQL 서버 실행
+
+PostgreSQL 서버를 설정하는 방법은 아래와 같이 2가지 있습니다.
+
+#### 1. Docker 환경
+
+아래는 SSL 연결만 허용하는 설정입니다.
+
+```bash
+# set variables
+POSTGRES_HOST=DB서버주소
+POSTGRES_USER=DB계정이름
+POSTGRES_PASSWORD=DB계정암호
+POSTGRES_DB=DB이름
+POSTGRES_DOCKER_VOLUME_NAME=DB도커볼륨이름
+
+# https://www.postgresql.org/docs/14/ssl-tcp.html
+openssl req -new -nodes -text -out root.csr \
+  -keyout root.key -subj "/CN=$POSTGRES_USER"
+
+chmod og-rwx root.key
+
+openssl x509 -req -in root.csr -text -days 3650 \
+  -extfile /etc/ssl/openssl.cnf -extensions v3_ca \
+  -signkey root.key -out root.crt
+
+openssl req -new -nodes -text -out server.csr \
+  -keyout server.key -subj "/CN=$POSTGRES_HOST"
+
+openssl x509 -req -in server.csr -text -days 365 \
+  -CA root.crt -CAkey root.key -CAcreateserial \
+  -out server.crt
+
+# https://stackoverflow.com/questions/55072221/deploying-postgresql-docker-with-ssl-certificate-and-key-with-volumes
+sudo chown 0:70 server.key
+sudo chmod 640 server.key
+
+# https://www.postgresql.org/docs/14/auth-pg-hba-conf.html
+echo "
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+
+# 'local' is for Unix domain socket connections only
+local   all             all                                     trust
+# IPv4 local connections:
+host    all             all             127.0.0.1/32            trust
+# IPv6 local connections:
+host    all             all             ::1/128                 trust
+# Allow replication connections from localhost, by a user with the
+# replication privilege.
+local   replication     all                                     trust
+host    replication     all             127.0.0.1/32            trust
+host    replication     all             ::1/128                 trust
+
+hostssl all all all scram-sha-256
+" > pg_hba.conf
+
+# start a postgres docker container, mapping the .key and .crt into the image.
+sudo docker volume create $POSTGRES_DOCKER_VOLUME_NAME
+sudo docker container create --name dummy-container --volume $POSTGRES_DOCKER_VOLUME_NAME:/root hello-world
+sudo docker cp ./root.crt dummy-container:/root
+sudo docker cp ./server.crt dummy-container:/root
+sudo docker cp ./server.key dummy-container:/root
+sudo docker cp ./pg_hba.conf dummy-container:/root
+sudo docker rm dummy-container
+
+sudo docker run \
+  -d \
+  -e POSTGRES_USER=$POSTGRES_USER \
+  -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
+  -e POSTGRES_DB=$POSTGRES_DB \
+  -e LANG=ko_KR.UTF8 \
+  -e LC_COLLATE=C \
+  -e POSTGRES_INITDB_ARGS=--data-checksums \
+  --name postgres \
+  -p 5432:5432 \
+  --restart=on-failure \
+  --shm-size=256MB \
+  --volume $POSTGRES_DOCKER_VOLUME_NAME:/var/lib/postgresql \
+  postgres:14-alpine \
+  -c ssl=on \
+  -c ssl_ca_file=/var/lib/postgresql/root.crt \
+  -c ssl_cert_file=/var/lib/postgresql/server.crt \
+  -c ssl_key_file=/var/lib/postgresql/server.key \
+  -c hba_file=/var/lib/postgresql/pg_hba.conf
+```
+
+위 명령어를 실행하면 아래와 같은 파일이 생성됩니다.
+
+- `pg_hba.conf`: PostgreSQL 클라이언트 연결 방식 설정
+- `root.crt`: 루트 인증서. 서버에서 사용. 클라이언트 쪽에 복사
+- `root.csr`: ?
+- `root.key`: 루트/리프 인증서 생성 시 필요. 유츌되면 새로 만들어야 함
+- `server.crt`: 리프 인증서. 서버에서 사용
+- `server.csr`: ?
+- `server.key`: 리프 인증서 생성 시 필요. 서버에서 사용
+
+그리고 아래 스크립트를 실행하거나 수동으로 데이터베이스에 더미 데이터를 넣어줍니다.
+
+```
+yarn import
+```
+
+#### 2. PostgreSQL 환경
+
+PostgreSQL 서버에 접속해서 아래와 같이 사용자와 데이터베이스를 생성합니다. PostgreSQL 기본 관리자 이름은 `postgres` 입니다.
+
+```sql
+CREATE USER DB_사용자_이름 WITH PASSWORD 'DB_사용자_비밀번호';
+CREATE DATABASE DB_이름 OWNER DB_사용자_이름 TEMPLATE template0 LC_COLLATE "C" LC_CTYPE "ko_KR.UTF-8";
+
+\c DB_이름 DB_관리자_이름
+ALTER SCHEMA public OWNER TO DB_사용자_이름;
+```
+
+그리고 아래 스크립트를 실행하거나 수동으로 데이터베이스에 더미 데이터를 넣어줍니다.
+
+```
+yarn import
+```
+
+### Redis 서버 실행
+
+Redis 서버를 실행합니다.
+
+```bash
+# https://redis.io/docs/manual/security/encryption/
+git clone https://github.com/redis/redis.git
+vi ./redis/utils/gen-test-certs.sh
+```
+
+인증서의 CN을 수정해줍니다.
+
+```bash
+# set variables
+REDIS_USER=REDIS_계정_이름
+REDIS_PASSWORD=REDIS_계정_암호
+REDIS_HOST=REDIS_주소
+REDIS_DOCKER_VOLUME_NAME=REDIS_도커_볼륨_이름
+
+# generate certificates
+# https://github.com/redis/redis/blob/unstable/utils/gen-test-certs.sh
+./redis/utils/gen-test-certs.sh $REDIS_HOST
+
+echo "
+user default off
+user $REDIS_USER on >$REDIS_PASSWORD allkeys allchannels allcommands
+" > users.acl
+
+# https://github.com/moby/moby/issues/25245#issuecomment-365970076
+sudo docker volume create $REDIS_DOCKER_VOLUME_NAME
+sudo docker container create --name dummy-container -v $REDIS_DOCKER_VOLUME_NAME:/root hello-world
+sudo docker cp ./tests/tls/server.crt dummy-container:/root
+sudo docker cp ./tests/tls/server.key dummy-container:/root
+sudo docker cp ./tests/tls/ca.crt dummy-container:/root
+sudo docker cp ./tests/tls/redis.dh dummy-container:/root
+sudo docker cp ./users.acl dummy-container:/root
+sudo docker rm dummy-container
+
+sudo docker run \
+  --detach \
+  -e REDIS_PASSWORD=redis \
+  --name=redis \
+  --publish 6379:6379 \
+  --restart=on-failure \
+  --volume $REDIS_DOCKER_VOLUME_NAME:/data \
+  redis:7-alpine \
+  redis-server \
+  --loglevel warning \
+  --tls-port 6379 --port 0 \
+  --tls-cert-file /data/server.crt \
+  --tls-key-file /data/server.key \
+  --tls-ca-cert-file /data/ca.crt \
+  --tls-dh-params-file /data/redis.dh \
+  --appendonly yes --appendfsync no \
+  --requirepass $REDIS_PASSWORD \
+  --aclfile /data/users.acl
+```
+
+그리고 아래와 같은 명령어로 Redis 서버에 접속할 수 있습니다. `client.crt`, `client.key`, `ca.crt` 파일은 서버에서 가져옵니다.
+
+```bash
+redis-cli \
+  -h $REDIS_HOST \
+  -p 포트번호 \
+  --user $REDIS_USER \
+  --askpass \
+  --tls \
+  --cert ./client.crt \
+  --key ./client.key \
+  --cacert ./ca.crt
+```
+
+### 환경변수 제작
+
+루트 폴더에 아래와 같은 내용이 담긴 환경 변수 파일을 생성합니다.
+
+필요한 환경변수 목록은 [`src/common/constants.ts`](src/common/constants.ts) 파일 안에 있습니다.
+
+- `.env.local`: `yarn start` 실행 시 필요
+- `.env.local.dev`: `yarn dev` 실행 시 필요
+- `.env.local.docker`: `docker-compose up` 실행 시 필요
+- `.env.test`: `yarn test` 실행 시 필요
+
+### Node.js 서버 실행
+
+Node.js 서버를 실행하는 방법은 아래와 같이 3가지 있습니다.
+
+1. 동적 번들링 및 Nodemon으로 서버를 실행합니다.
+
+```
+yarn dev
+```
+
+2. TypeScript 파일을 JavaScript로 트랜스파일 및 번들링 후 Node.js로 서버를 실행합니다.
+
+```
+yarn build && yarn start
+```
+
+3. Docker 환경에서 Node.js 서버, PostgreSQL 서버, Redis 서버를 실행합니다.
+
+```
+docker-compose --env-file .env.local.docker up --detach --build --force-recreate
+```
+
+### CI/CD
+
+GitHub에 push 할 때마다 자동으로 `Cloud Build`에서 새로운 Docker 이미지를 만들어서 `Container Registry`에 저장합니다. 그리고 `Cloud Run`에 요청이 들어오면 새로운 이미지를 기반으로 Docker 컨테이너를 생성합니다.
+
+## 👨‍💻 개발 과정
 
 ### Yarn berry
 
@@ -79,13 +322,13 @@ yarn init -2
   "main": "프로그램 진입점 파일 경로",
   "repository": "저장소 주소",
   "scripts": {
-    ...
+    // ...
   },
   "dependencies": {
-    ...
+    // ...
   },
   "devDependencies": {
-    ...
+    // ...
   },
   "engines": {
     "node": ">=18.2.0"
@@ -109,7 +352,7 @@ yarn tsc --init
 
 ```json
 {
-  ...
+  // ...
   "type": "module"
 }
 ```
@@ -119,7 +362,7 @@ yarn tsc --init
 ```json
 {
   "compilerOptions": {
-    ...
+    // ...
     "allowSyntheticDefaultImports": true,
     "lib": ["ES2022"],
     "module": "ES2022",
@@ -201,8 +444,8 @@ yarn add --dev @typescript-eslint/eslint-plugin@latest eslint-config-standard@la
     "plugin:promise/recommended",
     "plugin:@typescript-eslint/recommended",
     "standard"
-  ],
-  ...
+  ]
+  // ...
 }
 ```
 
@@ -220,11 +463,11 @@ yarn add --dev eslint eslint-plugin-jest eslint-config-prettier
 ```json
 {
   "env": {
-    ...
+    // ...
     "jest/globals": true
   },
   "extends": [
-    ...
+    // ...
     "prettier"
   ],
   "overrides": [
@@ -235,8 +478,8 @@ yarn add --dev eslint eslint-plugin-jest eslint-config-prettier
         "jest/prefer-expect-assertions": "off"
       }
     }
-  ],
-  ...
+  ]
+  // ...
 }
 ```
 
@@ -246,10 +489,10 @@ yarn add --dev eslint eslint-plugin-jest eslint-config-prettier
 {
   "scripts": {
     "lint": "eslint . --fix --ignore-path .gitignore",
-    "format": "prettier . --write",
-    ...
-  },
-  ...
+    "format": "prettier . --write"
+    // ...
+  }
+  // ...
 }
 ```
 
@@ -310,9 +553,9 @@ yarn tsc
   "editor.tabSize": 2,
   "files.autoSave": "onFocusChange",
   "files.eol": "\n",
-  "sort-imports.default-sort-style": "module",
+  "sort-imports.default-sort-style": "module"
 
-  ...
+  // ...
 }
 ```
 
@@ -329,10 +572,70 @@ yarn tsc
     "ms-azuretools.vscode-docker",
     "bradymholt.pgformatter",
     "foxundermoon.shell-format",
-    "ckolkman.vscode-postgres",
+    "ckolkman.vscode-postgres"
 
-    ...
+    // ...
   ]
+}
+```
+
+### Environment variables
+
+> https://github.com/motdotla/dotenv
+
+```bash
+yarn add dotenv
+```
+
+아래 파일을 생성합니다:
+
+| 파일 이름           | `NODE_ENV`  | 환경     | 특징            |
+| ------------------- | ----------- | -------- | --------------- |
+| `.env`              | production  | 클라우드 | 실 서버         |
+| `.env.dev`          | production  | 클라우드 | 스테이징 서버   |
+| `.env.local`        | production  | 로컬     | 코드 축소       |
+| `.env.local.dev`    | development | 로컬     | Fast refresh    |
+| `.env.local.docker` | production  | 로컬     | Docker 컨테이너 |
+
+`src/common/constants.ts` 파일을 생성합니다:
+
+```ts
+// 자동
+export const NODE_ENV = process.env.NODE_ENV as string
+export const K_SERVICE = process.env.K_SERVICE as string // GCP에서 실행 중일 때
+export const PORT = (process.env.PORT ?? '4000') as string
+
+// 공통
+export const PROJECT_ENV = (process.env.PROJECT_ENV ?? '') as string
+export const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY as string
+
+if (!PROJECT_ENV) throw new Error('`PROJECT_ENV` 환경 변수를 설정해주세요.')
+if (!JWT_SECRET_KEY) throw new Error('`JWT_SECRET_KEY` 환경 변수를 설정해주세요.')
+
+// 개별
+export const LOCALHOST_HTTPS_KEY = process.env.LOCALHOST_HTTPS_KEY as string
+export const LOCALHOST_HTTPS_CERT = process.env.LOCALHOST_HTTPS_CERT as string
+
+if (PROJECT_ENV.startsWith('local')) {
+  if (!LOCALHOST_HTTPS_KEY) throw new Error('`LOCALHOST_HTTPS_KEY` 환경 변수를 설정해주세요.')
+  if (!LOCALHOST_HTTPS_CERT) throw new Error('`LOCALHOST_HTTPS_CERT` 환경 변수를 설정해주세요.')
+}
+```
+
+### Nodemon
+
+> https://github.com/remy/nodemon
+
+```bash
+yarn add --dev nodemon
+```
+
+`nodemon.json` 파일을 생성합니다:
+
+```json
+{
+  "ext": "cjs",
+  "watch": ["out"]
 }
 ```
 
@@ -352,30 +655,33 @@ import esbuild from 'esbuild'
 
 const NODE_ENV = process.env.NODE_ENV
 
-const buildResult = esbuild.buildSync({
-  bundle: true,
-  entryPoints: ['src/index.ts'],
-  loader: {
-    '.sql': 'text',
-  },
-  metafile: true,
-  minify: NODE_ENV === 'production',
-  outfile: 'out/index.cjs',
-  platform: 'node',
-  target: ['node18'],
-  treeShaking: true,
-  watch: NODE_ENV === 'development' && {
-    onRebuild: (error, result) => {
-      if (error) {
-        console.error('watch build failed:', error)
-      } else {
-        showOutfilesSize(result)
-      }
+esbuild
+  .build({
+    bundle: true,
+    entryPoints: ['src/index.ts'],
+    loader: {
+      '.sql': 'text',
     },
-  },
-})
-
-showOutfilesSize(buildResult)
+    metafile: true,
+    minify: NODE_ENV === 'production',
+    outfile: 'out/index.cjs',
+    platform: 'node',
+    target: ['node18'],
+    treeShaking: true,
+    watch: NODE_ENV === 'development' && {
+      onRebuild: (error, result) => {
+        if (error) {
+          console.error('watch build failed:', error)
+        } else {
+          showOutfilesSize(result)
+        }
+      },
+    },
+  })
+  .then((result) => showOutfilesSize(result))
+  .catch((error) => {
+    throw new Error(error)
+  })
 
 function showOutfilesSize(result) {
   const outputs = result.metafile.outputs
@@ -390,11 +696,12 @@ function showOutfilesSize(result) {
 ```json
 {
   "scripts": {
+    "dev": "NODE_ENV=development node esbuild.js & NODE_ENV=development nodemon -r dotenv/config out/index.cjs dotenv_config_path=.env.local.dev",
     "build": "NODE_ENV=production node esbuild.js",
-    "start": "NODE_ENV=production node -r dotenv/config out/index.cjs dotenv_config_path=.env.local",
-    ...
-  },
-  ...
+    "start": "NODE_ENV=production node -r dotenv/config out/index.cjs dotenv_config_path=.env.local"
+    // ...
+  }
+  // ...
 }
 ```
 
@@ -486,15 +793,6 @@ export default async function routes(fastify: FastifyInstance, options: object) 
 }
 ```
 
-`src/common/constants.ts` 파일을 생성합니다:
-
-```ts
-export const NODE_ENV = process.env.NODE_ENV as string
-export const PROJECT_ENV = process.env.PROJECT_ENV as string
-export const K_SERVICE = process.env.K_SERVICE as string
-export const PORT = process.env.PORT as string
-```
-
 ### Fastify + HTTP2
 
 > https://www.fastify.io/docs/latest/Reference/HTTP2/
@@ -502,11 +800,15 @@ export const PORT = process.env.PORT as string
 `src/routes/index.ts` 파일을 수정합니다:
 
 ```ts
-import { ..., LOCALHOST_HTTPS_CERT, LOCALHOST_HTTPS_KEY, PROJECT_ENV } from '../common/constants'
+import {
+  // ...
+  LOCALHOST_HTTPS_CERT,
+  LOCALHOST_HTTPS_KEY,
+  PROJECT_ENV,
+} from '../common/constants'
 
 const fastify = Fastify({
-  ...
-
+  // ...
   http2: true,
   ...(PROJECT_ENV.startsWith('local') && {
     https: {
@@ -515,14 +817,14 @@ const fastify = Fastify({
     },
   }),
 })
+
+// ...
 ```
 
-`src/common/constants.ts` 파일을 수정합니다:
+HTTPS 인증서를 생성합니다:
 
-```ts
-...
-export const LOCALHOST_HTTPS_KEY = process.env.LOCALHOST_HTTPS_KEY as string
-export const LOCALHOST_HTTPS_CERT = process.env.LOCALHOST_HTTPS_CERT as string
+```bash
+
 ```
 
 ### Fastify + CORS
@@ -538,15 +840,14 @@ yarn add @fastify/cors
 ```ts
 import cors from '@fastify/cors'
 
-...
+// ...
 
-export default async function startServer() {
-  await fastify.register(cors, {
-    origin: ['http://localhost:3000'],
-  })
-
-  ...
-}
+fastify.register(cors, {
+  origin: [
+    'http://localhost:3000',
+    // ...
+  ],
+})
 ```
 
 ### Fastify + Prevent DoS
@@ -562,20 +863,102 @@ yarn add @fastify/rate-limit
 ```ts
 import rateLimit from '@fastify/rate-limit'
 
-...
+// ...
 
-export default async function startServer() {
-  await fastify.register(rateLimit, {
-    ...(NODE_ENV === 'development' && {
-      allowList: ['127.0.0.1'],
-    }),
-  })
-
-  ...
-}
+fastify.register(rateLimit, {
+  ...(NODE_ENV === 'development' && {
+    allowList: ['127.0.0.1'],
+  }),
+})
 ```
 
 ### Fastify + JWT
+
+> https://github.com/fastify/fastify-jwt
+
+```bash
+yarn add @fastify/jwt
+```
+
+`src/routes/index.ts` 파일을 수정합니다:
+
+```ts
+import fastifyJWT from '@fastify/jwt'
+import {
+  // ...
+  JWT_SECRET_KEY,
+} from '../common/constants'
+
+// ...
+
+fastify.register(fastifyJWT, {
+  secret: JWT_SECRET_KEY,
+})
+
+type QuerystringJWT = {
+  Querystring: {
+    jwt?: string
+  }
+}
+
+fastify.addHook<QuerystringJWT>('onRequest', async (request, reply) => {
+  const jwt = request.headers.authorization ?? request.query.jwt
+  if (!jwt) return
+
+  request.headers.authorization = jwt
+
+  try {
+    await request.jwtVerify()
+  } catch (err) {
+    reply.send(err)
+  }
+})
+```
+
+### Fastify + Schema
+
+> https://www.fastify.io/docs/latest/Reference/Type-Providers/ \
+> https://github.com/sinclairzx81/typebox \
+> https://github.com/fastify/fastify-type-provider-typebox
+
+```bash
+yarn add @sinclair/typebox
+yarn add --dev @fastify/type-provider-typebox
+```
+
+`src/routes/index.ts` 파일을 수정합니다:
+
+```ts
+import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
+import { Type } from '@sinclair/typebox'
+
+// ...
+
+const fastify = Fastify({
+  // ...
+}).withTypeProvider<TypeBoxTypeProvider>()
+
+const schema = {
+  schema: {
+    querystring: Type.Object({
+      foo: Type.Optional(Type.Number()),
+      bar: Type.Optional(Type.String()),
+    }),
+    response: {
+      200: Type.Object({
+        hello: Type.String(),
+        foo: Type.Optional(Type.Number()),
+        bar: Type.Optional(Type.String()),
+      }),
+    },
+  },
+}
+
+fastify.get('/', schema, async (request, _) => {
+  const { foo, bar } = request.query
+  return { hello: 'world', foo, bar }
+})
+```
 
 ### Fastify + Swagger
 
@@ -583,9 +966,11 @@ export default async function startServer() {
 yarn add @fastify/swagger
 ```
 
-### Fastify + Schema
-
 ### Fastify + File uploader
+
+```bash
+yarn add
+```
 
 ### PostgreSQL
 
