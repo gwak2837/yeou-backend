@@ -1,5 +1,6 @@
 import cors from '@fastify/cors'
 import fastifyJWT from '@fastify/jwt'
+import multipart from '@fastify/multipart'
 import rateLimit from '@fastify/rate-limit'
 // import fastifySwagger from '@fastify/swagger'
 // import fastifySwaggerUi from '@fastify/swagger-ui'
@@ -18,6 +19,7 @@ import {
 } from '../common/constants'
 // import authRoute from './auth'
 import productRoute from './product'
+import uploadRoute from './upload'
 import userRoute from './user'
 
 const fastify = Fastify({
@@ -67,6 +69,14 @@ fastify.register(rateLimit, {
   ...(NODE_ENV === 'development' && {
     allowList: ['127.0.0.1'],
   }),
+})
+
+fastify.register(multipart, {
+  limits: {
+    fileSize: 10_000_000,
+    fieldSize: 1_000,
+    files: 10,
+  },
 })
 
 fastify.register(fastifyJWT, {
@@ -120,11 +130,12 @@ fastify.addHook<QuerystringJWT>('onRequest', async (request, reply) => {
 
 fastify.register(productRoute)
 fastify.register(userRoute)
+fastify.register(uploadRoute)
 // fastify.register(authRoute)
 
 export default async function startServer() {
   try {
-    await fastify.listen({ port: +PORT, host: K_SERVICE ? '0.0.0.0' : 'localhost' })
+    return await fastify.listen({ port: +PORT, host: K_SERVICE ? '0.0.0.0' : 'localhost' })
   } catch (err) {
     fastify.log.error(err)
     throw new Error()

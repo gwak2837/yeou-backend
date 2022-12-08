@@ -30,6 +30,8 @@
   },
   "plugins": ["@typescript-eslint"],
   "rules": {
+    "import/no-unresolved": "off",
+
     "n/no-missing-import": "off",
 
     "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
@@ -37,8 +39,6 @@
     // "camelcase": "off",
     // 'no-console': ['warn', { allow: ['warn', 'error'] }],
     // 'prefer-const': 'off',
-
-    // "import/no-unresolved": "off",
 
     // 'n/no-unpublished-import': 'off',
     // "node/no-unsupported-features/es-syntax": "off",

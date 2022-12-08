@@ -237,16 +237,16 @@ redis-cli \
 
 Node.js 서버를 실행하는 방법은 아래와 같이 3가지 있습니다.
 
-1. 동적 번들링 및 Nodemon으로 서버를 실행합니다.
+1. Nodemon으로 서버를 실행합니다.
 
 ```
 yarn dev
 ```
 
-2. TypeScript 파일을 JavaScript로 트랜스파일 및 번들링 후 Node.js로 서버를 실행합니다.
+2. esbuild 패키지로 번들링 후 Node.js로 서버를 실행합니다.
 
 ```
-yarn build && yarn start
+yarn start
 ```
 
 3. Docker 환경에서 Node.js 서버, PostgreSQL 서버, Redis 서버를 실행합니다.
@@ -468,6 +468,7 @@ yarn add --dev eslint eslint-plugin-jest eslint-config-prettier
   },
   "extends": [
     // ...
+    // Make sure to put "prettier" last, so it gets the chance to override other configs
     "prettier"
   ],
   "overrides": [
@@ -589,7 +590,7 @@ yarn add dotenv
 
 아래 파일을 생성합니다:
 
-| 파일 이름           | `NODE_ENV`  | 환경     | 특징            |
+| 파일 이름           | `NODE_ENV`  | 환경     | 용도            |
 | ------------------- | ----------- | -------- | --------------- |
 | `.env`              | production  | 클라우드 | 실 서버         |
 | `.env.dev`          | production  | 클라우드 | 스테이징 서버   |
@@ -642,7 +643,8 @@ yarn add --dev nodemon
 ### esbuild
 
 > https://esbuild.github.io/getting-started/#bundling-for-node \
-> https://esbuild.github.io/api/#metafile
+> https://esbuild.github.io/api/#metafile \
+> https://stackoverflow.com/a/35455532/16868717 \
 
 ```bash
 yarn add --dev esbuild
@@ -698,7 +700,7 @@ function showOutfilesSize(result) {
   "scripts": {
     "dev": "NODE_ENV=development node esbuild.js & NODE_ENV=development nodemon -r dotenv/config out/index.cjs dotenv_config_path=.env.local.dev",
     "build": "NODE_ENV=production node esbuild.js",
-    "start": "NODE_ENV=production node -r dotenv/config out/index.cjs dotenv_config_path=.env.local"
+    "start": "yarn build && NODE_ENV=production node -r dotenv/config out/index.cjs dotenv_config_path=.env.local"
     // ...
   }
   // ...
@@ -753,7 +755,7 @@ export default async function startServer() {
 ```json
 {
   "Fastify Routes": {
-    "prefix": "routes",
+    "prefix": "route",
     "body": [
       "import { FastifyInstance } from 'fastify'",
       "",
@@ -769,7 +771,7 @@ export default async function startServer() {
 }
 ```
 
-`src/routes/product.ts` 파일을 생성하고 `routes` 단축어를 입력해 아래 코드를 자동 완성합니다:
+`src/routes/product.ts` 파일을 생성하고 `route` 단축어를 입력해 아래 코드를 자동 완성합니다:
 
 ```ts
 import { FastifyInstance } from 'fastify'
@@ -781,7 +783,7 @@ export default async function routes(fastify: FastifyInstance, options: object) 
 }
 ```
 
-`src/routes/user.ts` 파일을 생성하고 `routes` 단축어를 입력해 아래 코드를 자동 완성합니다:
+`src/routes/user.ts` 파일을 생성하고 `route` 단축어를 입력해 아래 코드를 자동 완성합니다:
 
 ```ts
 import { FastifyInstance } from 'fastify'
@@ -966,21 +968,135 @@ fastify.get('/', schema, async (request, _) => {
 yarn add @fastify/swagger
 ```
 
-### Fastify + File uploader
+### Fastify + Google Cloud File uploader
+
+> https://github.com/fastify/fastify-multipart \
+> https://github.com/googleapis/nodejs-storage#readme \
+> https://cloud.google.com/storage/docs/reference/libraries#client-libraries-install-nodejs \
+> https://cloud.google.com/storage/docs/uploading-objects-from-memory \
+> https://cloud.google.com/storage/docs/streaming-uploads#code-samples
 
 ```bash
-yarn add
+yarn add @fastify/multipart @google-cloud/storage
+```
+
+`src/routes/index.ts` 파일을 수정합니다:
+
+```ts
+import multipart from '@fastify/multipart'
+
+// ..
+
+fastify.register(multipart, {
+  limits: {
+    fileSize: 10_000_000,
+    fieldSize: 1_000,
+    files: 10,
+  },
+})
+```
+
+`src/routes/upload.ts` 파일을 생성합니다:
+
+```ts
+import { randomUUID } from 'crypto'
+import path from 'path'
+
+import { FastifyInstance } from 'fastify'
+
+import { bucket } from '../common/google-storage'
+
+type UploadResult = {
+  fileName: string
+  url: string
+}
+
+export default async function routes(fastify: FastifyInstance) {
+  fastify.post('/upload/images', async function (request, reply) {
+    // if (!request.userId) throw UnauthorizedError('로그인 후 시도해주세요')
+
+    const files = request.files()
+    const result: UploadResult[] = []
+
+    for await (const file of files) {
+      if (file.file) {
+        // if (!file.mimetype.startsWith('image/'))
+        //   throw BadRequestError('이미지 파일만 업로드할 수 있습니다')
+
+        const timestamp = ~~(Date.now() / 1000)
+        const fileExtension = path.extname(file.filename)
+        const fileName = `${timestamp}-${randomUUID()}${fileExtension}`
+
+        bucket
+          .file(fileName)
+          .save(await file.toBuffer())
+          .then(() =>
+            result.push({
+              fileName: file.filename,
+              url: `https://storage.googleapis.com/${bucket.name}/${fileName}`,
+            })
+          )
+          .catch((error) => console.log(error))
+      }
+    }
+
+    reply.status(201).send(result)
+  })
+}
+```
+
+`src/common/constants.ts` 파일을 수정합니다:
+
+```ts
+// ...
+
+export const GOOGLE_CLOUD_STORAGE_BUCKET_NAME = process.env
+  .GOOGLE_CLOUD_STORAGE_BUCKET_NAME as string
 ```
 
 ### PostgreSQL
 
 > https://node-postgres.com/ \
-> https://pgtyped.vercel.app/docs/getting-started
+> https://pgtyped.vercel.app/docs/cli \
+> https://stackoverflow.com/a/20909045/16868717 \
+> https://github.com/brianc/node-postgres/issues/2089
 
 ```bash
 yarn add pg
-yarn add --dev @types/pg
-yarn add --dev @pgtyped/cli @pgtyped/query
+yarn add --dev @types/pg @pgtyped/cli @pgtyped/query
+```
+
+`src/common/constants.ts` 파일을 수정합니다:
+
+```ts
+// ...
+export const PGURI = process.env.PGURI as string
+export const POSTGRES_CA = process.env.POSTGRES_CA as string
+```
+
+`src/common/postgres.ts` 파일을 생성합니다:
+
+```ts
+import pg from 'pg'
+
+import { PGURI, POSTGRES_CA, PROJECT_ENV } from '../common/constants'
+
+const { Pool } = pg
+
+export const pool = new Pool({
+  connectionString: PGURI,
+
+  ...((PROJECT_ENV === 'cloud-dev' ||
+    PROJECT_ENV === 'cloud-prod' ||
+    PROJECT_ENV === 'local-prod') && {
+    ssl: {
+      ca: `-----BEGIN CERTIFICATE-----\n${POSTGRES_CA}\n-----END CERTIFICATE-----`,
+      checkServerIdentity: () => {
+        return undefined
+      },
+    },
+  }),
+})
 ```
 
 `pgtyped.config.json` 파일을 생성합니다:
@@ -998,25 +1114,258 @@ yarn add --dev @pgtyped/cli @pgtyped/query
 }
 ```
 
-`database/export.ts` 파일을 생성합니다:
-`database/import.ts` 파일을 생성합니다:
-`database/index.ts` 파일을 생성합니다:
-`database/pgtyped.sh` 파일을 생성합니다:
-
-`package.json` 파일을 수정합니다:
+`package.json` 파일을 수정합니다. `dev` 스크립트가 길어지기 때문에 아래처럼 sh 파일로 분리합니다:
 
 ```json
 {
   "scripts": {
-    "pgtyped": "database/pgtyped.sh",
-    "export": "tsc --project database/tsconfig.json && node database/dist/export.js",
-    "import": "tsc --project database/tsconfig.json && node database/dist/import.js",
-    ...
-  },
-  ...
+    "dev": "src/dev.sh"
+    // ...
+  }
+  // ...
 }
 ```
 
-### Script: dev
+`src/dev.sh` 파일을 생성합니다:
 
-https://stackoverflow.com/a/35455532/16868717 \
+```sh
+#!/bin/sh
+export $(grep -v '^#' .env.local.dev | xargs) && pgtyped --watch --config pgtyped.config.json &
+sleep 2 && NODE_ENV=development node esbuild.js &
+sleep 2 && NODE_ENV=development nodemon -r dotenv/config out/index.cjs dotenv_config_path=.env.local.dev
+```
+
+### PostgreSQL CSV
+
+> https://www.postgresqltutorial.com/postgresql-tutorial/export-postgresql-table-to-csv-file/ \
+> https://dba.stackexchange.com/q/137140 \
+> https://github.com/brianc/node-pg-copy-streams
+
+```bash
+yarn add pg-copy-streams
+yarn add --dev @types/pg-copy-streams
+```
+
+`database/index.ts` 파일을 생성합니다:
+
+```ts
+import dotenv from 'dotenv'
+import pg from 'pg'
+
+const { Pool } = pg
+
+// 환경 변수 설정
+const env = process.argv[2]
+export let CSV_PATH: string
+
+if (env === 'prod') {
+  dotenv.config()
+  CSV_PATH = 'prod'
+} else if (env === 'dev') {
+  dotenv.config({ path: '.env.development' })
+  CSV_PATH = 'dev'
+} else {
+  dotenv.config({ path: '.env.development.local' })
+  CSV_PATH = 'local'
+}
+
+const PROJECT_ENV = process.env.PROJECT_ENV as string
+const PGURI = process.env.PGURI as string
+const POSTGRES_CA = process.env.POSTGRES_CA as string
+
+if (!PROJECT_ENV) throw new Error('`PROJECT_ENV` 환경 변수를 설정해주세요.')
+if (!PGURI) throw new Error('`PGURI` 환경 변수를 설정해주세요.')
+if (!POSTGRES_CA) throw new Error('`POSTGRES_CA` 환경 변수를 설정해주세요.')
+
+console.log(PGURI)
+
+// PostgreSQL 서버 연결
+export const pool = new Pool({
+  connectionString: PGURI,
+
+  ...((PROJECT_ENV === 'cloud-dev' ||
+    PROJECT_ENV === 'cloud-prod' ||
+    PROJECT_ENV === 'local-prod') && {
+    ssl: {
+      ca: `-----BEGIN CERTIFICATE-----\n${POSTGRES_CA}\n-----END CERTIFICATE-----`,
+      checkServerIdentity: () => {
+        return undefined
+      },
+    },
+  }),
+})
+```
+
+`database/export.ts` 파일을 생성합니다:
+
+```ts
+/* eslint-disable no-console */
+import { createWriteStream, mkdirSync, rmSync } from 'fs'
+import { exit } from 'process'
+
+import pgCopy from 'pg-copy-streams'
+
+import { CSV_PATH, pool } from './index.js'
+
+const { to } = pgCopy
+
+// 폴더 다시 만들기
+rmSync(`database/data/${CSV_PATH}`, { recursive: true, force: true })
+mkdirSync(`database/data/${CSV_PATH}`, { recursive: true })
+
+let fileCount = 0
+
+const client = await pool.connect()
+
+const { rows } = await client.query('SELECT schema_name FROM information_schema.schemata')
+
+for (const row of rows) {
+  const schemaName = row.schema_name
+  if (schemaName !== 'pg_catalog' && schemaName !== 'information_schema') {
+    const { rows: rows2 } = await client.query(
+      `SELECT tablename FROM pg_tables WHERE schemaname='${schemaName}'`
+    )
+
+    for (const row2 of rows2) {
+      const tableName = row2.tablename
+      fileCount += 1
+      console.log(`👀 - ${schemaName}.${tableName}`)
+
+      const csvPath = `database/data/${CSV_PATH}/${schemaName}.${tableName}.csv`
+      const fileStream = createWriteStream(csvPath)
+
+      const sql = `COPY ${schemaName}.${tableName} TO STDOUT WITH CSV DELIMITER ',' HEADER ENCODING 'UTF-8'`
+      const stream = client.query(to(sql))
+      stream.pipe(fileStream)
+
+      stream.on('end', () => {
+        fileCount -= 1
+        if (fileCount === 0) {
+          client.release()
+          exit()
+        }
+      })
+    }
+  }
+}
+```
+
+`database/import.ts` 파일을 생성합니다:
+
+```ts
+/* eslint-disable no-console */
+import { createReadStream, readFileSync } from 'fs'
+import { exit } from 'process'
+import { createInterface } from 'readline'
+
+import pgCopy from 'pg-copy-streams'
+
+import { CSV_PATH, pool } from './index.js'
+
+const { from } = pgCopy
+
+const client = await pool.connect()
+
+try {
+  console.log('BEGIN')
+  await client.query('BEGIN')
+
+  const initialization = readFileSync('database/initialization.sql', 'utf8').toString()
+  await client.query(initialization)
+
+  // 테이블 생성 순서와 동일하게
+  const tables = [
+    // ...
+  ]
+
+  // GENERATED ALWAYS AS IDENTITY 컬럼이 있는 테이블
+  const sequenceTables = [
+    // ...
+  ]
+
+  for (const table of tables) {
+    console.log('👀 - table', table)
+
+    try {
+      const csvPath = `database/data/${CSV_PATH}/${table}.csv`
+      const columns = await readFirstLine(csvPath)
+      const fileStream = createReadStream(csvPath)
+
+      const sql = `COPY ${table}(${columns}) FROM STDIN WITH CSV DELIMITER ',' HEADER ENCODING 'UTF-8'`
+      const stream = client.query(from(sql))
+      fileStream.pipe(stream)
+    } catch (error) {
+      console.log('👀 - error', error)
+    }
+  }
+
+  for (const sequenceTable of sequenceTables) {
+    console.log('👀 - sequenceTable', sequenceTable)
+
+    client.query(`LOCK TABLE ${sequenceTable} IN EXCLUSIVE MODE`)
+    client.query(
+      `SELECT setval(pg_get_serial_sequence('${sequenceTable}', 'id'), COALESCE((SELECT MAX(id)+1 FROM ${sequenceTable}), 1), false)`
+    )
+  }
+
+  console.log('COMMIT')
+  await client.query('COMMIT')
+} catch (error) {
+  console.log('ROLLBACK')
+  await client.query('ROLLBACK')
+  throw error
+} finally {
+  client.release()
+}
+
+exit()
+
+// Utils
+async function readFirstLine(path: string) {
+  const inputStream = createReadStream(path)
+  // eslint-disable-next-line no-unreachable-loop
+  for await (const line of createInterface(inputStream)) return line
+  inputStream.destroy()
+}
+```
+
+`database/tsconfig.json` 파일을 생성합니다:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2021"],
+    "module": "ES2020",
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": ["./"]
+}
+```
+
+`package.json` 파일의 스크립트를 수정합니다:
+
+```json
+{
+  "scripts": {
+    "export": "tsc --project database/tsconfig.json && node database/dist/export.js",
+    "import": "tsc --project database/tsconfig.json && node database/dist/import.js"
+    // ...
+  }
+  // ...
+}
+```
+
+### Docker
+
+### Docker Compose
+
+### OAuth
+
+### Jest ?
