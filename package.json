@@ -12,7 +12,7 @@
   "main": "out/index.cjs",
   "repository": "https://github.com/rmfpdlxmtidl/coopang-backend.git",
   "scripts": {
-    "dev": "NODE_ENV=development node esbuild.js & NODE_ENV=development nodemon -r dotenv/config out/index.cjs dotenv_config_path=.env.local.dev",
+    "dev": "src/dev.sh",
     "build": "NODE_ENV=production node esbuild.js",
     "start": "yarn build && NODE_ENV=production node -r dotenv/config out/index.cjs dotenv_config_path=.env.local",
     "clean": "rm -rf .yarn/cache .yarn/unplugged .yarn/install-state.gz out .pnp.*",
@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@fastify/cors": "^8.2.0",
+    "@fastify/error": "^3.2.0",
     "@fastify/jwt": "^6.5.0",
     "@fastify/multipart": "^7.3.0",
     "@fastify/rate-limit": "^7.6.0",
@@ -33,7 +34,8 @@
     "@sinclair/typebox": "^0.25.11",
     "dotenv": "^16.0.3",
     "fastify": "^4.10.2",
-    "pg": "^8.8.0"
+    "pg": "^8.8.0",
+    "redis": "^4.5.1"
   },
   "devDependencies": {
     "@fastify/type-provider-typebox": "^2.4.0",

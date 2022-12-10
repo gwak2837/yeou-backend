@@ -1,8 +1,6 @@
 import dotenv from 'dotenv'
 import pg from 'pg'
 
-const { Pool } = pg
-
 // 환경 변수 설정
 const env = process.argv[2]
 export let CSV_PATH: string
@@ -28,18 +26,5 @@ if (!POSTGRES_CA) throw new Error('`POSTGRES_CA` 환경 변수를 설정해주�
 
 console.log(PGURI)
 
-// PostgreSQL 서버 연결
-export const pool = new Pool({
-  connectionString: PGURI,
-
-  ...((PROJECT_ENV === 'cloud-dev' ||
-    PROJECT_ENV === 'cloud-prod' ||
-    PROJECT_ENV === 'local-prod') && {
-    ssl: {
-      ca: `-----BEGIN CERTIFICATE-----\n${POSTGRES_CA}\n-----END CERTIFICATE-----`,
-      checkServerIdentity: () => {
-        return undefined
-      },
-    },
-  }),
-})
+// eslint-disable-next-line @typescript-eslint/no-var-requires, no-undef
+export const pool: pg.Pool = require('../src/common/postgres')

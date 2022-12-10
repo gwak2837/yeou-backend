@@ -17,7 +17,7 @@ import {
   PORT,
   PROJECT_ENV,
 } from '../common/constants'
-// import authRoute from './auth'
+import authRoute from './auth'
 import productRoute from './product'
 import uploadRoute from './upload'
 import userRoute from './user'
@@ -81,6 +81,12 @@ fastify.register(multipart, {
 
 fastify.register(fastifyJWT, {
   secret: JWT_SECRET_KEY,
+  sign: {
+    expiresIn: '3d',
+  },
+  verify: {
+    algorithms: ['HS256'],
+  },
 })
 
 type QuerystringJWT = {
@@ -131,7 +137,7 @@ fastify.addHook<QuerystringJWT>('onRequest', async (request, reply) => {
 fastify.register(productRoute)
 fastify.register(userRoute)
 fastify.register(uploadRoute)
-// fastify.register(authRoute)
+fastify.register(authRoute)
 
 export default async function startServer() {
   try {

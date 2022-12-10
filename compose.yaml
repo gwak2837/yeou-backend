@@ -1,0 +1,51 @@
+services:
+  coopang-backend:
+    build: .
+    container_name: coopang-api
+    depends_on:
+      - redis
+      - postgres
+    env_file: .env.local.docker
+    image: coopang-api:latest
+    restart: on-failure
+    ports:
+      - 4002:4002
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --loglevel warning
+    container_name: coopang-redis
+    ports:
+      - 6379
+    restart: on-failure
+    volumes:
+      - 'redis:/data'
+
+  postgres:
+    image: postgres:14-alpine
+    container_name: coopang-postgres
+    environment:
+      POSTGRES_PASSWORD: example
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - 5432
+    restart: on-failure
+    volumes:
+      - 'postgres:/var/lib/postgresql/data'
+
+  postgres-archive:
+    image: postgres:14-alpine
+    container_name: coopang-postgres-archive
+    environment:
+      POSTGRES_PASSWORD: example2
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - 54321
+    restart: on-failure
+    volumes:
+      - 'postgres-archive:/var/lib/postgresql/data'
+
+volumes:
+  redis:
+  postgres:
+  postgres-archive:

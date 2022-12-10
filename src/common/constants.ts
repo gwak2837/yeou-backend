@@ -10,14 +10,6 @@ export const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY as string
 export const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY as string
 export const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY as string
 
-export const PGURI = process.env.PGURI as string
-export const POSTGRES_CA = process.env.POSTGRES_CA as string
-
-export const REDIS_CONNECTION_STRING = process.env.REDIS_CONNECTION_STRING as string
-export const REDIS_CA = process.env.REDIS_CA as string
-export const REDIS_CLIENT_KEY = process.env.REDIS_CLIENT_KEY as string
-export const REDIS_CLIENT_CERT = process.env.REDIS_CLIENT_CERT as string
-
 export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID as string
 export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET as string
 export const GOOGLE_CLOUD_STORAGE_BUCKET_NAME = process.env
@@ -32,13 +24,39 @@ export const KAKAO_CLIENT_SECRET = process.env.KAKAO_CLIENT_SECRET as string
 export const NAVER_CLIENT_ID = process.env.NAVER_CLIENT_ID as string
 export const NAVER_CLIENT_SECRET = process.env.NAVER_CLIENT_SECRET as string
 
+export const PGURI = process.env.PGURI as string
+
+export const REDIS_CONNECTION_STRING = process.env.REDIS_CONNECTION_STRING as string
+
 if (!PROJECT_ENV) throw new Error('`PROJECT_ENV` 환경 변수를 설정해주세요.')
 
 if (!JWT_SECRET_KEY) throw new Error('`JWT_SECRET_KEY` 환경 변수를 설정해주세요.')
 
+if (!PGURI) throw new Error('`PGURI` 환경 변수를 설정해주세요.')
+
+if (!REDIS_CONNECTION_STRING) throw new Error('`REDIS_CONNECTION_STRING` 환경 변수를 설정해주세요.')
+
 // 개별
 export const LOCALHOST_HTTPS_KEY = process.env.LOCALHOST_HTTPS_KEY as string
 export const LOCALHOST_HTTPS_CERT = process.env.LOCALHOST_HTTPS_CERT as string
+
+export const POSTGRES_CA = process.env.POSTGRES_CA as string
+export const POSTGRES_CERT = process.env.POSTGRES_CERT as string
+export const POSTGRES_KEY = process.env.POSTGRES_KEY as string
+
+export const REDIS_CA = process.env.REDIS_CA as string
+export const REDIS_CLIENT_KEY = process.env.REDIS_CLIENT_KEY as string
+export const REDIS_CLIENT_CERT = process.env.REDIS_CLIENT_CERT as string
+
+if (PROJECT_ENV.startsWith('cloud') || PROJECT_ENV === 'local-prod') {
+  if (!POSTGRES_CA) throw new Error('`POSTGRES_CA` 환경 변수를 설정해주세요.')
+  if (!POSTGRES_CERT) throw new Error('`POSTGRES_CERT` 환경 변수를 설정해주세요.')
+  if (!POSTGRES_KEY) throw new Error('`POSTGRES_KEY` 환경 변수를 설정해주세요.')
+
+  if (!REDIS_CA) throw new Error('`REDIS_CA` 환경 변수를 설정해주세요.')
+  if (!REDIS_CLIENT_KEY) throw new Error('`REDIS_CLIENT_KEY` 환경 변수를 설정해주세요.')
+  if (!REDIS_CLIENT_CERT) throw new Error('`REDIS_CLIENT_CERT` 환경 변수를 설정해주세요.')
+}
 
 if (PROJECT_ENV.startsWith('local')) {
   if (!LOCALHOST_HTTPS_KEY) throw new Error('`LOCALHOST_HTTPS_KEY` 환경 변수를 설정해주세요.')

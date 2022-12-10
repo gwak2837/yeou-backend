@@ -19,36 +19,10 @@ try {
   await client.query(initialization)
 
   // 테이블 생성 순서와 동일하게
-  const tables = [
-    'public.user',
-    'public.cert_pending',
-    'public.cert',
-    'public.hashtag',
-    'public.notification',
-    'public.post',
-    'public.verification_history',
-    'public.chatroom',
-    'public.chat',
-    'public.chatroom_x_user',
-    'public.hashtag_x_post',
-    'public.hashtag_x_user',
-    'public.post_x_user',
-    'public.post_x_mentioned_user',
-    'public.user_x_user',
-  ]
+  const tables = ['public.user']
 
   // GENERATED ALWAYS AS IDENTITY 컬럼이 있는 테이블
-  const sequenceTables = [
-    '"user"',
-    'cert_pending',
-    'cert',
-    'hashtag',
-    'notification',
-    'post',
-    'verification_history',
-    'chatroom',
-    'chat',
-  ]
+  const sequenceTables = ['"user"']
 
   for (const table of tables) {
     console.log('👀 - table', table)

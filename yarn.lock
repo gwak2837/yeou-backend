@@ -87,6 +87,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fastify/error@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "@fastify/error@npm:3.2.0"
+  checksum: e538ef76fd2dedd0584691e0c891997321a2050092b11089a70090f5a0edab0dc8ab069747aa6025782280824e2348548e051c8e77558baec699bd44e581e187
+  languageName: node
+  linkType: hard
+
 "@fastify/fast-json-stringify-compiler@npm:^4.1.0":
   version: 4.1.0
   resolution: "@fastify/fast-json-stringify-compiler@npm:4.1.0"
@@ -373,6 +380,62 @@ __metadata:
     "@types/debug": ^4.1.4
     debug: ^4.1.1
   checksum: 93599a8e1892fc2770975eb0f9ed26c2be3ecf5bd5ec50f9b583f9b7e5358ccb8bf8611c28c7d19b7cbfb595ec5cfb1eed8d42fa1aa1950b07e5b8eec9df5e73
+  languageName: node
+  linkType: hard
+
+"@redis/bloom@npm:1.1.0":
+  version: 1.1.0
+  resolution: "@redis/bloom@npm:1.1.0"
+  peerDependencies:
+    "@redis/client": ^1.0.0
+  checksum: 8e02a1cd58c1cf0c56d23f3621640a473ed09b588d1b88c7789fcdb87f2f7b2ce53f231058ab828c119c07c0f850175a19960cab0dbbc1d5f2b4ec20d1d43e17
+  languageName: node
+  linkType: hard
+
+"@redis/client@npm:1.4.2":
+  version: 1.4.2
+  resolution: "@redis/client@npm:1.4.2"
+  dependencies:
+    cluster-key-slot: 1.1.1
+    generic-pool: 3.9.0
+    yallist: 4.0.0
+  checksum: a85f7ee15f6431b3b13fd7b3ebc2e274f451629ec3d9298afd70413eb4cb3dca422cc323755728ff83782ba320306d1e45298ce8c429db939b0aa8759f5a7bca
+  languageName: node
+  linkType: hard
+
+"@redis/graph@npm:1.1.0":
+  version: 1.1.0
+  resolution: "@redis/graph@npm:1.1.0"
+  peerDependencies:
+    "@redis/client": ^1.0.0
+  checksum: d3df807108a42929ed65269c691fe6ab7eda55de91318f02a22b2d637c1bfef8817fccd17025904f5a0be8cf1cea5941334ec9f10719336da5d8f1c54cd4997e
+  languageName: node
+  linkType: hard
+
+"@redis/json@npm:1.0.4":
+  version: 1.0.4
+  resolution: "@redis/json@npm:1.0.4"
+  peerDependencies:
+    "@redis/client": ^1.0.0
+  checksum: de07f9c37abed603dec352593eb69fc8a94475e7f86b4f65b9805394492d448a1e4181db74269d80eb9dba6f3ae8a41804204821db36bb801cd7c1e30ac7ec80
+  languageName: node
+  linkType: hard
+
+"@redis/search@npm:1.1.0":
+  version: 1.1.0
+  resolution: "@redis/search@npm:1.1.0"
+  peerDependencies:
+    "@redis/client": ^1.0.0
+  checksum: dc0f1c8234580fb839e1135f76a70654461cb03be8918799a2a0cd79dd9815e0978feb99bcc01f5be37dabd95460f6cdba9f61a90a4d39183205883e12855afd
+  languageName: node
+  linkType: hard
+
+"@redis/time-series@npm:1.0.4":
+  version: 1.0.4
+  resolution: "@redis/time-series@npm:1.0.4"
+  peerDependencies:
+    "@redis/client": ^1.0.0
+  checksum: a5fca079deb04a2f204a7f9a375a6ff698a119d5dd53f7581fa8fd9e3bacacf1ecb0253b97fada484a012fea7a98014bc0f4f79707d4e92ff61c00318f2bfe04
   languageName: node
   linkType: hard
 
@@ -884,6 +947,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"bindings@npm:1.5.0":
+  version: 1.5.0
+  resolution: "bindings@npm:1.5.0"
+  dependencies:
+    file-uri-to-path: 1.0.0
+  checksum: 65b6b48095717c2e6105a021a7da4ea435aa8d3d3cd085cb9e85bcb6e5773cf318c4745c3f7c504412855940b585bdf9b918236612a1c7a7942491de176f1ae7
+  languageName: node
+  linkType: hard
+
 "bn.js@npm:^4.0.0":
   version: 4.12.0
   resolution: "bn.js@npm:4.12.0"
@@ -1066,6 +1138,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cluster-key-slot@npm:1.1.1":
+  version: 1.1.1
+  resolution: "cluster-key-slot@npm:1.1.1"
+  checksum: 2fb7390e7950075acb09fc8aad3dc939abb64b139ba1b5f6341efdd0beda8cdc8b508e5f30d943370cf30ea0c13741c579e0846efd007b328bdc1a5a712264da
+  languageName: node
+  linkType: hard
+
 "color-convert@npm:^2.0.1":
   version: 2.0.1
   resolution: "color-convert@npm:2.0.1"
@@ -1149,6 +1228,7 @@ __metadata:
   resolution: "coopang-backend@workspace:."
   dependencies:
     "@fastify/cors": ^8.2.0
+    "@fastify/error": ^3.2.0
     "@fastify/jwt": ^6.5.0
     "@fastify/multipart": ^7.3.0
     "@fastify/rate-limit": ^7.6.0
@@ -1177,9 +1257,17 @@ __metadata:
     nodemon: ^2.0.20
     pg: ^8.8.0
     prettier: 2.8.0
+    redis: ^4.5.1
     typescript: ^4.9.3
   languageName: unknown
   linkType: soft
+
+"core-util-is@npm:~1.0.0":
+  version: 1.0.3
+  resolution: "core-util-is@npm:1.0.3"
+  checksum: 9de8597363a8e9b9952491ebe18167e3b36e7707569eed0ebf14f8bba773611376466ae34575bca8cfe3c767890c859c74056084738f09d4e4a6f902b2ad7d99
+  languageName: node
+  linkType: hard
 
 "cross-spawn@npm:^7.0.2":
   version: 7.0.3
@@ -2174,6 +2262,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"file-uri-to-path@npm:1.0.0":
+  version: 1.0.0
+  resolution: "file-uri-to-path@npm:1.0.0"
+  checksum: b648580bdd893a008c92c7ecc96c3ee57a5e7b6c4c18a9a09b44fb5d36d79146f8e442578bc0e173dc027adf3987e254ba1dfd6e3ec998b7c282873010502144
+  languageName: node
+  linkType: hard
+
 "fill-range@npm:^7.0.1":
   version: 7.0.1
   resolution: "fill-range@npm:7.0.1"
@@ -2358,6 +2453,13 @@ __metadata:
     gaxios: ^5.0.0
     json-bigint: ^1.0.0
   checksum: 13c56677e4aaf568768f3ab2ee03699359fc887d8a0c3f3573d94c0e66206ced0ed3bf3869d1a7cf2a164f4f7555607c51d6c8c30fd9bd87a81bc354276c7942
+  languageName: node
+  linkType: hard
+
+"generic-pool@npm:3.9.0":
+  version: 3.9.0
+  resolution: "generic-pool@npm:3.9.0"
+  checksum: 3d89e9b2018d2e3bbf44fec78c76b2b7d56d6a484237aa9daf6ff6eedb14b0899dadd703b5d810219baab2eb28e5128fb18b29e91e602deb2eccac14492d8ca8
   languageName: node
   linkType: hard
 
@@ -2709,7 +2811,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"inherits@npm:2, inherits@npm:2.0.4, inherits@npm:^2.0.1, inherits@npm:^2.0.3":
+"inherits@npm:2, inherits@npm:2.0.4, inherits@npm:^2.0.1, inherits@npm:^2.0.3, inherits@npm:~2.0.1":
   version: 2.0.4
   resolution: "inherits@npm:2.0.4"
   checksum: 4a48a733847879d6cf6691860a6b1e3f0f4754176e4d71494c41f3475553768b10f84b5ce1d40fbd0e34e6bfbb864ee35858ad4dd2cf31e02fc4a154b724d7f1
@@ -2926,6 +3028,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"isarray@npm:0.0.1":
+  version: 0.0.1
+  resolution: "isarray@npm:0.0.1"
+  checksum: 49191f1425681df4a18c2f0f93db3adb85573bcdd6a4482539d98eac9e705d8961317b01175627e860516a2fc45f8f9302db26e5a380a97a520e272e2a40a8d4
+  languageName: node
+  linkType: hard
+
 "isexe@npm:^2.0.0":
   version: 2.0.0
   resolution: "isexe@npm:2.0.0"
@@ -3055,6 +3164,17 @@ __metadata:
     prelude-ls: ^1.2.1
     type-check: ~0.4.0
   checksum: 12c5021c859bd0f5248561bf139121f0358285ec545ebf48bb3d346820d5c61a4309535c7f387ed7d84361cf821e124ce346c6b7cef8ee09a67c1473b46d0fc4
+  languageName: node
+  linkType: hard
+
+"libpq@npm:^1.8.10":
+  version: 1.8.12
+  resolution: "libpq@npm:1.8.12"
+  dependencies:
+    bindings: 1.5.0
+    nan: ^2.14.0
+    node-gyp: latest
+  checksum: c50c9ba4bcdf25a001ab26256ce1495049900543bf77649d18fa498aaa7cfdc98deae44b9e22ddb046002eebf8ced5c518075aaf879b15ebb167f628531d85e0
   languageName: node
   linkType: hard
 
@@ -3346,6 +3466,15 @@ __metadata:
   version: 2.1.3
   resolution: "ms@npm:2.1.3"
   checksum: aa92de608021b242401676e35cfa5aa42dd70cbdc082b916da7fb925c542173e36bce97ea3e804923fe92c0ad991434e4a38327e15a1b5b5f945d66df615ae6d
+  languageName: node
+  linkType: hard
+
+"nan@npm:^2.14.0":
+  version: 2.17.0
+  resolution: "nan@npm:2.17.0"
+  dependencies:
+    node-gyp: latest
+  checksum: ec609aeaf7e68b76592a3ba96b372aa7f5df5b056c1e37410b0f1deefbab5a57a922061e2c5b369bae9c7c6b5e6eecf4ad2dac8833a1a7d3a751e0a7c7f849ed
   languageName: node
   linkType: hard
 
@@ -3710,6 +3839,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pg-native@npm:*":
+  version: 3.0.1
+  resolution: "pg-native@npm:3.0.1"
+  dependencies:
+    libpq: ^1.8.10
+    pg-types: ^1.12.1
+    readable-stream: 1.0.31
+  checksum: 1a9f6d57322c05f4752a8ad474f7da760b89c0c8cced578e9aecbf84834f822a7602c516ff0898b93af1c6f17cf58fc7b43df96e22139688bfb6d58907c00e46
+  languageName: node
+  linkType: hard
+
 "pg-pool@npm:^3.5.2":
   version: 3.5.2
   resolution: "pg-pool@npm:3.5.2"
@@ -3723,6 +3863,19 @@ __metadata:
   version: 1.5.0
   resolution: "pg-protocol@npm:1.5.0"
   checksum: b839d12cafe942ef9cbc5b13c174eb2356804fb4fe8ead8279f46a36be90722d19a91409955beb8a3d5301639c44854e49749de4aef02dc361fee3e2a61fb1e4
+  languageName: node
+  linkType: hard
+
+"pg-types@npm:^1.12.1":
+  version: 1.13.0
+  resolution: "pg-types@npm:1.13.0"
+  dependencies:
+    pg-int8: 1.0.1
+    postgres-array: ~1.0.0
+    postgres-bytea: ~1.0.0
+    postgres-date: ~1.0.0
+    postgres-interval: ^1.1.0
+  checksum: 8dcdeb8dcc196288305b69545d1a5c6645a57a88c90ea7637558c685ee54e0c8ed02a8a4fb5de2d26e344430ebc4ad13182ebc9c72ced5ba6337bb854b3454c0
   languageName: node
   linkType: hard
 
@@ -3813,6 +3966,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"postgres-array@npm:~1.0.0":
+  version: 1.0.3
+  resolution: "postgres-array@npm:1.0.3"
+  checksum: e7e33dcc111850b09ef3ef1a631a9dd934a61f1c953e735a7eb9a957701444e80d1c18b08f788020270b7eaba719565cf1ff8ed88616609eaf58493e4d4c9a10
+  languageName: node
+  linkType: hard
+
 "postgres-array@npm:~2.0.0":
   version: 2.0.0
   resolution: "postgres-array@npm:2.0.0"
@@ -3827,7 +3987,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postgres-date@npm:~1.0.4":
+"postgres-date@npm:~1.0.0, postgres-date@npm:~1.0.4":
   version: 1.0.7
   resolution: "postgres-date@npm:1.0.7"
   checksum: 5745001d47e51cd767e46bcb1710649cd705d91a24d42fa661c454b6dcbb7353c066a5047983c90a626cd3bbfea9e626cc6fa84a35ec57e5bbb28b49f78e13ed
@@ -3935,6 +4095,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"readable-stream@npm:1.0.31":
+  version: 1.0.31
+  resolution: "readable-stream@npm:1.0.31"
+  dependencies:
+    core-util-is: ~1.0.0
+    inherits: ~2.0.1
+    isarray: 0.0.1
+    string_decoder: ~0.10.x
+  checksum: 7dbf6c9321f279d720c5de7fed57ff052db606d019df3d3a4a07be1c93326bac848bbf52fc8c7953d85a47a13e6508240674f7641df52264984c338fe1d55c04
+  languageName: node
+  linkType: hard
+
 "readable-stream@npm:^3.1.1, readable-stream@npm:^3.6.0":
   version: 3.6.0
   resolution: "readable-stream@npm:3.6.0"
@@ -3971,6 +4143,20 @@ __metadata:
   version: 0.2.0
   resolution: "real-require@npm:0.2.0"
   checksum: fa060f19f2f447adf678d1376928c76379dce5f72bd334da301685ca6cdcb7b11356813332cc243c88470796bc2e2b1e2917fc10df9143dd93c2ea608694971d
+  languageName: node
+  linkType: hard
+
+"redis@npm:^4.5.1":
+  version: 4.5.1
+  resolution: "redis@npm:4.5.1"
+  dependencies:
+    "@redis/bloom": 1.1.0
+    "@redis/client": 1.4.2
+    "@redis/graph": 1.1.0
+    "@redis/json": 1.0.4
+    "@redis/search": 1.1.0
+    "@redis/time-series": 1.0.4
+  checksum: edb40d54b74d18251f553368e6dd43104d249c3cb8f1a651d169d74f81c70de8911fbbcd1e83d27f413c746bb2f5d44891f7ef20ddff1ba9d727558855143d2e
   languageName: node
   linkType: hard
 
@@ -4411,6 +4597,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"string_decoder@npm:~0.10.x":
+  version: 0.10.31
+  resolution: "string_decoder@npm:0.10.31"
+  checksum: fe00f8e303647e5db919948ccb5ce0da7dea209ab54702894dd0c664edd98e5d4df4b80d6fabf7b9e92b237359d21136c95bf068b2f7760b772ca974ba970202
+  languageName: node
+  linkType: hard
+
 "strip-ansi@npm:^6.0.0, strip-ansi@npm:^6.0.1":
   version: 6.0.1
   resolution: "strip-ansi@npm:6.0.1"
@@ -4813,7 +5006,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yallist@npm:^4.0.0":
+"yallist@npm:4.0.0, yallist@npm:^4.0.0":
   version: 4.0.0
   resolution: "yallist@npm:4.0.0"
   checksum: 343617202af32df2a15a3be36a5a8c0c8545208f3d3dfbc6bb7c3e3b7e8c6f8e7485432e4f3b88da3031a6e20afa7c711eded32ddfb122896ac5d914e75848d5

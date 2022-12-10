@@ -30,6 +30,27 @@ cd jayudam-backend
 yarn
 ```
 
+### Docker 설치
+
+> https://docs.docker.com/engine/install/ubuntu/
+
+```bash
+sudo apt-get remove docker docker-engine docker.io containerd runc
+sudo apt-get update
+sudo apt-get install \
+    ca-certificates \
+    curl \
+    gnupg \
+    lsb-release
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+```
+
 ### PostgreSQL 서버 실행
 
 PostgreSQL 서버를 설정하는 방법은 아래와 같이 2가지 있습니다.
@@ -44,7 +65,6 @@ POSTGRES_HOST=DB서버주소
 POSTGRES_USER=DB계정이름
 POSTGRES_PASSWORD=DB계정암호
 POSTGRES_DB=DB이름
-POSTGRES_DOCKER_VOLUME_NAME=DB도커볼륨이름
 
 # https://www.postgresql.org/docs/14/ssl-tcp.html
 openssl req -new -nodes -text -out root.csr \
@@ -83,12 +103,12 @@ local   replication     all                                     trust
 host    replication     all             127.0.0.1/32            trust
 host    replication     all             ::1/128                 trust
 
-hostssl all all all scram-sha-256
+hostssl all all all scram-sha-256 clientcert=verify-ca
 " > pg_hba.conf
 
 # start a postgres docker container, mapping the .key and .crt into the image.
-sudo docker volume create $POSTGRES_DOCKER_VOLUME_NAME
-sudo docker container create --name dummy-container --volume $POSTGRES_DOCKER_VOLUME_NAME:/root hello-world
+sudo docker volume create postgres-volume
+sudo docker container create --name dummy-container --volume postgres-volume:/root hello-world
 sudo docker cp ./root.crt dummy-container:/root
 sudo docker cp ./server.crt dummy-container:/root
 sudo docker cp ./server.key dummy-container:/root
@@ -107,24 +127,33 @@ sudo docker run \
   -p 5432:5432 \
   --restart=on-failure \
   --shm-size=256MB \
-  --volume $POSTGRES_DOCKER_VOLUME_NAME:/var/lib/postgresql \
+  --volume postgres-volume:/var/lib/postgresql \
   postgres:14-alpine \
   -c ssl=on \
   -c ssl_ca_file=/var/lib/postgresql/root.crt \
   -c ssl_cert_file=/var/lib/postgresql/server.crt \
   -c ssl_key_file=/var/lib/postgresql/server.key \
   -c hba_file=/var/lib/postgresql/pg_hba.conf
+
+sudo docker ps -a
+sudo docker volume ls
 ```
 
 위 명령어를 실행하면 아래와 같은 파일이 생성됩니다.
 
 - `pg_hba.conf`: PostgreSQL 클라이언트 연결 방식 설정
-- `root.crt`: 루트 인증서. 서버에서 사용. 클라이언트 쪽에 복사
+- `root.crt`: 루트 인증서. 클라이언트로 복사
 - `root.csr`: ?
 - `root.key`: 루트/리프 인증서 생성 시 필요. 유츌되면 새로 만들어야 함
-- `server.crt`: 리프 인증서. 서버에서 사용
+- `server.crt`: 리프 인증서. 클라이언트로 복사
 - `server.csr`: ?
-- `server.key`: 리프 인증서 생성 시 필요. 서버에서 사용
+- `server.key`: 리프 인증서 생성 시 필요. 클라이언트로 복사
+
+로컬 컴퓨터에서 아래 명령어로 PostgreSQL 서버 접속을 테스트합니다:
+
+```bash
+psql "postgresql://아이디:비밀번호@서버주소:서버포트/이름?sslmode=verify-full&sslrootcert=루트인증서위치&sslcert=리프인증서위치&sslkey=리프인증서키위치"
+```
 
 그리고 아래 스크립트를 실행하거나 수동으로 데이터베이스에 더미 데이터를 넣어줍니다.
 
@@ -137,11 +166,13 @@ yarn import
 PostgreSQL 서버에 접속해서 아래와 같이 사용자와 데이터베이스를 생성합니다. PostgreSQL 기본 관리자 이름은 `postgres` 입니다.
 
 ```sql
-CREATE USER DB_사용자_이름 WITH PASSWORD 'DB_사용자_비밀번호';
-CREATE DATABASE DB_이름 OWNER DB_사용자_이름 TEMPLATE template0 LC_COLLATE "C" LC_CTYPE "ko_KR.UTF-8";
-
-\c DB_이름 DB_관리자_이름
-ALTER SCHEMA public OWNER TO DB_사용자_이름;
+CREATE USER 사용자이름 WITH PASSWORD '사용자비밀번호';
+\du
+CREATE DATABASE DB이름 OWNER 사용자이름 TEMPLATE template0 LC_COLLATE "C" LC_CTYPE "ko_KR.UTF-8";
+\l
+\c DB이름 DB관리자이름
+ALTER SCHEMA public OWNER TO 사용자이름;
+\dn
 ```
 
 그리고 아래 스크립트를 실행하거나 수동으로 데이터베이스에 더미 데이터를 넣어줍니다.
@@ -152,7 +183,7 @@ yarn import
 
 ### Redis 서버 실행
 
-Redis 서버를 실행합니다.
+인증서의 O(Organization), CN(Common Name)을 수정해줍니다.
 
 ```bash
 # https://redis.io/docs/manual/security/encryption/
@@ -160,7 +191,7 @@ git clone https://github.com/redis/redis.git
 vi ./redis/utils/gen-test-certs.sh
 ```
 
-인증서의 CN을 수정해줍니다.
+Redis 인증서를 만들고 서버를 실행합니다.
 
 ```bash
 # set variables
@@ -187,6 +218,7 @@ sudo docker cp ./tests/tls/ca.crt dummy-container:/root
 sudo docker cp ./tests/tls/redis.dh dummy-container:/root
 sudo docker cp ./users.acl dummy-container:/root
 sudo docker rm dummy-container
+sudo docker image rm hello-world
 
 sudo docker run \
   --detach \
@@ -206,9 +238,11 @@ sudo docker run \
   --appendonly yes --appendfsync no \
   --requirepass $REDIS_PASSWORD \
   --aclfile /data/users.acl
+
+sudo docker ps -a
 ```
 
-그리고 아래와 같은 명령어로 Redis 서버에 접속할 수 있습니다. `client.crt`, `client.key`, `ca.crt` 파일은 서버에서 가져옵니다.
+그리고 로컬 컴퓨터에서 아래와 같은 명령어로 클라우드에 있는 Redis 서버에 접속할 수 있습니다. `client.crt`, `client.key`, `ca.crt` 파일은 클라우드 서버에서 SFTP를 이용해 로컬 컴퓨터로 가져옵니다.
 
 ```bash
 redis-cli \
@@ -222,7 +256,7 @@ redis-cli \
   --cacert ./ca.crt
 ```
 
-### 환경변수 제작
+### 환경변수 설정
 
 루트 폴더에 아래와 같은 내용이 담긴 환경 변수 파일을 생성합니다.
 
@@ -1070,8 +1104,17 @@ yarn add --dev @types/pg @pgtyped/cli @pgtyped/query
 
 ```ts
 // ...
-export const PGURI = process.env.PGURI as string
 export const POSTGRES_CA = process.env.POSTGRES_CA as string
+export const POSTGRES_CERT = process.env.POSTGRES_CERT as string
+export const POSTGRES_KEY = process.env.POSTGRES_KEY as string
+
+if (PROJECT_ENV.startsWith('cloud') || PROJECT_ENV === 'local-prod') {
+  if (!POSTGRES_CA) throw new Error('`POSTGRES_CA` 환경 변수를 설정해주세요.')
+  if (!POSTGRES_CERT) throw new Error('`POSTGRES_CERT` 환경 변수를 설정해주세요.')
+  if (!POSTGRES_KEY) throw new Error('`POSTGRES_KEY` 환경 변수를 설정해주세요.')
+
+  // ...
+}
 ```
 
 `src/common/postgres.ts` 파일을 생성합니다:
@@ -1079,7 +1122,7 @@ export const POSTGRES_CA = process.env.POSTGRES_CA as string
 ```ts
 import pg from 'pg'
 
-import { PGURI, POSTGRES_CA, PROJECT_ENV } from '../common/constants'
+import { PGURI, POSTGRES_CA, POSTGRES_CERT, POSTGRES_KEY, PROJECT_ENV } from '../common/constants'
 
 const { Pool } = pg
 
@@ -1091,12 +1134,47 @@ export const pool = new Pool({
     PROJECT_ENV === 'local-prod') && {
     ssl: {
       ca: `-----BEGIN CERTIFICATE-----\n${POSTGRES_CA}\n-----END CERTIFICATE-----`,
+      key: `-----BEGIN PRIVATE KEY-----\n${POSTGRES_KEY}\n-----END PRIVATE KEY-----`,
+      cert: `-----BEGIN CERTIFICATE-----\n${POSTGRES_CERT}\n-----END CERTIFICATE-----`,
       checkServerIdentity: () => {
         return undefined
       },
     },
   }),
 })
+```
+
+`src/index.ts` 파일을 생성합니다:
+
+```ts
+import { networkInterfaces } from 'os'
+
+import { NODE_ENV, PGURI, PORT, REDIS_CONNECTION_STRING } from './common/constants'
+import { pool } from './common/postgres'
+import startServer from './routes'
+
+const nets = networkInterfaces()
+
+pool
+  .query('SELECT CURRENT_TIMESTAMP')
+  .then(({ rows }) =>
+    console.log(
+      `🚅 Connected to ${PGURI} at ${new Date(rows[0].current_timestamp).toLocaleString()}`
+    )
+  )
+  .catch((error) => {
+    throw new Error('Cannot connect to PostgreSQL server... ' + error)
+  })
+
+startServer()
+  .then((url) => {
+    console.log(`🚀 Server ready at: ${url}`)
+    if (NODE_ENV !== 'production' && nets.en0)
+      console.log(`🚀 On Your Network: http://${nets.en0[1].address}:${PORT}`)
+  })
+  .catch((error) => {
+    throw new Error('Cannot start API server... ' + error)
+  })
 ```
 
 `pgtyped.config.json` 파일을 생성합니다:
@@ -1126,7 +1204,22 @@ export const pool = new Pool({
 }
 ```
 
+`.yarnrc.yml` 파일을 수정합니다:
+
+```yml
+packageExtensions:
+  pg@*:
+    dependencies:
+      pg-native: '*'
+# ...
+```
+
 `src/dev.sh` 파일을 생성합니다:
+
+```
+touch src/dev.sh
+chmod +x src/dev.sh
+```
 
 ```sh
 #!/bin/sh
@@ -1151,8 +1244,6 @@ yarn add --dev @types/pg-copy-streams
 ```ts
 import dotenv from 'dotenv'
 import pg from 'pg'
-
-const { Pool } = pg
 
 // 환경 변수 설정
 const env = process.argv[2]
@@ -1179,21 +1270,8 @@ if (!POSTGRES_CA) throw new Error('`POSTGRES_CA` 환경 변수를 설정해주�
 
 console.log(PGURI)
 
-// PostgreSQL 서버 연결
-export const pool = new Pool({
-  connectionString: PGURI,
-
-  ...((PROJECT_ENV === 'cloud-dev' ||
-    PROJECT_ENV === 'cloud-prod' ||
-    PROJECT_ENV === 'local-prod') && {
-    ssl: {
-      ca: `-----BEGIN CERTIFICATE-----\n${POSTGRES_CA}\n-----END CERTIFICATE-----`,
-      checkServerIdentity: () => {
-        return undefined
-      },
-    },
-  }),
-})
+// eslint-disable-next-line @typescript-eslint/no-var-requires, no-undef
+export const pool: pg.Pool = require('../src/common/postgres')
 ```
 
 `database/export.ts` 파일을 생성합니다:
@@ -1335,7 +1413,7 @@ async function readFirstLine(path: string) {
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2021"],
+    "lib": ["ES2022"],
     "module": "ES2020",
     "moduleResolution": "node",
     "outDir": "dist",
@@ -1345,7 +1423,7 @@ async function readFirstLine(path: string) {
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["./"]
+  "include": ["../"]
 }
 ```
 
@@ -1362,9 +1440,174 @@ async function readFirstLine(path: string) {
 }
 ```
 
+### Redis
+
+> https://github.com/redis/node-redis
+
+`src/common/redis.ts` 파일을 생성합니다:
+
+```ts
+import { createClient } from 'redis'
+
+import {
+  PROJECT_ENV,
+  REDIS_CA,
+  REDIS_CLIENT_CERT,
+  REDIS_CLIENT_KEY,
+  REDIS_CONNECTION_STRING,
+} from '../common/constants'
+
+export const redisClient = createClient({
+  url: REDIS_CONNECTION_STRING,
+
+  ...((PROJECT_ENV === 'cloud-dev' ||
+    PROJECT_ENV === 'cloud-prod' ||
+    PROJECT_ENV === 'local-prod') && {
+    socket: {
+      tls: true,
+      ca: `-----BEGIN CERTIFICATE-----\n${REDIS_CA}\n-----END CERTIFICATE-----`,
+      key: `-----BEGIN PRIVATE KEY-----\n${REDIS_CLIENT_KEY}\n-----END PRIVATE KEY-----`,
+      cert: `-----BEGIN CERTIFICATE-----\n${REDIS_CLIENT_CERT}\n-----END CERTIFICATE-----`,
+      checkServerIdentity: () => {
+        return undefined
+      },
+      reconnectStrategy: (retries) => Math.min(retries * 1000, 15_000),
+    },
+  }),
+})
+
+redisClient.on('error', (err) => console.log('Redis Client Error', err))
+
+export async function startRedisClient() {
+  await redisClient.connect()
+  return redisClient.time()
+}
+```
+
+`src/common/constants.ts` 파일을 생성합니다:
+
+```ts
+// ...
+export const REDIS_CA = process.env.REDIS_CA as string
+export const REDIS_CLIENT_KEY = process.env.REDIS_CLIENT_KEY as string
+export const REDIS_CLIENT_CERT = process.env.REDIS_CLIENT_CERT as string
+
+if (PROJECT_ENV.startsWith('cloud') || PROJECT_ENV === 'local-prod') {
+  // ...
+
+  if (!REDIS_CA) throw new Error('`REDIS_CA` 환경 변수를 설정해주세요.')
+  if (!REDIS_CLIENT_KEY) throw new Error('`REDIS_CLIENT_KEY` 환경 변수를 설정해주세요.')
+  if (!REDIS_CLIENT_CERT) throw new Error('`REDIS_CLIENT_CERT` 환경 변수를 설정해주세요.')
+}
+```
+
 ### Docker
 
+> https://docs.docker.com/engine/reference/builder/
+
+`Dockerfile` 파일을 생성합니다:
+
+```dockerfile
+# Install all packages and transpile TypeScript into JavaScript
+FROM node:18-alpine AS builder
+
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+COPY .yarn .yarn
+COPY .yarnrc.yml package.json yarn.lock ./
+RUN yarn
+
+COPY esbuild.js tsconfig.json ./
+COPY src src
+RUN yarn build
+
+# Copy bundle only
+FROM node:18-alpine AS runner
+
+EXPOSE $PORT
+
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+COPY --from=builder /app/out out
+
+ENTRYPOINT ["node", "out/index.cjs"]
+```
+
 ### Docker Compose
+
+> https://docs.docker.com/compose/reference/
+
+`compose.yaml` 파일을 생성합니다:
+
+```yml
+services:
+  coopang-backend:
+    build: .
+    container_name: coopang-api
+    depends_on:
+      - redis
+      - postgres
+    env_file: .env.docker.local
+    image: coopang-api:latest
+    restart: on-failure
+    ports:
+      - 4002:4002
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --loglevel warning
+    container_name: coopang-redis
+    ports:
+      - 6379
+    restart: on-failure
+    volumes:
+      - 'redis:/data'
+
+  postgres:
+    image: postgres:14-alpine
+    container_name: coopang-postgres
+    environment:
+      POSTGRES_PASSWORD: example
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - 5432
+    restart: on-failure
+    volumes:
+      - 'postgres:/var/lib/postgresql/data'
+
+  postgres-archive:
+    image: postgres:14-alpine
+    container_name: coopang-postgres-archive
+    environment:
+      POSTGRES_PASSWORD: example2
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - 54321
+    restart: on-failure
+    volumes:
+      - 'postgres-archive:/var/lib/postgresql/data'
+
+volumes:
+  redis:
+  postgres:
+  postgres-archive:
+```
+
+### Cloud
+
+Oracle cloud
+
+Instance 생성
+
+Ingress rule 추가: 5432, 6379
+
+```bash
+
+```
 
 ### OAuth
 
