@@ -18,6 +18,7 @@ import {
   PROJECT_ENV,
 } from '../common/constants'
 import authRoute from './auth'
+import authKakaoRoute from './auth/kakao'
 import productRoute from './product'
 import uploadRoute from './upload'
 import userRoute from './user'
@@ -33,6 +34,8 @@ const fastify = Fastify({
     },
   }),
 }).withTypeProvider<TypeBoxTypeProvider>()
+
+export type TFastify = typeof fastify
 
 const schema = {
   schema: {
@@ -138,6 +141,7 @@ fastify.register(productRoute)
 fastify.register(userRoute)
 fastify.register(uploadRoute)
 fastify.register(authRoute)
+fastify.register(authKakaoRoute)
 
 export default async function startServer() {
   try {

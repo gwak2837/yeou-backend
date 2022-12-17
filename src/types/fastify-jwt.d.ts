@@ -10,4 +10,13 @@ declare module '@fastify/jwt' {
       exp: number
     }
   }
+
+  interface DecodePayloadType {
+    user: {
+      id: number
+      name?: string
+      iat: number
+      exp: number
+    }
+  }
 }

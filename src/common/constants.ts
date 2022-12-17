@@ -4,8 +4,8 @@ export const K_SERVICE = process.env.K_SERVICE as string // GCP에서 실행 중
 export const PORT = (process.env.PORT ?? '4000') as string
 
 // 공통
-export const PROJECT_ENV = (process.env.PROJECT_ENV ?? '') as string
-
+export const PROJECT_ENV = process.env.PROJECT_ENV as string
+export const FRONTEND_URL = process.env.FRONTEND_URL as string
 export const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY as string
 export const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY as string
 export const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY as string
@@ -29,8 +29,12 @@ export const PGURI = process.env.PGURI as string
 export const REDIS_CONNECTION_STRING = process.env.REDIS_CONNECTION_STRING as string
 
 if (!PROJECT_ENV) throw new Error('`PROJECT_ENV` 환경 변수를 설정해주세요.')
-
+if (!FRONTEND_URL) throw new Error('`FRONTEND_URL` 환경 변수를 설정해주세요.')
 if (!JWT_SECRET_KEY) throw new Error('`JWT_SECRET_KEY` 환경 변수를 설정해주세요.')
+
+if (!KAKAO_ADMIN_KEY) throw new Error('`KAKAO_ADMIN_KEY` 환경 변수를 설정해주세요.')
+if (!KAKAO_REST_API_KEY) throw new Error('`KAKAO_REST_API_KEY` 환경 변수를 설정해주세요.')
+if (!KAKAO_CLIENT_SECRET) throw new Error('`KAKAO_CLIENT_SECRET` 환경 변수를 설정해주세요.')
 
 if (!PGURI) throw new Error('`PGURI` 환경 변수를 설정해주세요.')
 
