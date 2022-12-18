@@ -17,6 +17,11 @@ try {
 
   const initialization = readFileSync('database/initialization.sql', 'utf8').toString()
   await client.query(initialization)
+  console.log('👀 - initialization')
+
+  const functions = readFileSync('database/functions.sql', 'utf8').toString()
+  await client.query(functions)
+  console.log('👀 - functions')
 
   // 테이블 생성 순서와 동일하게
   const tables = ['public.user']
@@ -35,8 +40,8 @@ try {
       const sql = `COPY ${table}(${columns}) FROM STDIN WITH CSV DELIMITER ',' HEADER ENCODING 'UTF-8'`
       const stream = client.query(from(sql))
       fileStream.pipe(stream)
-    } catch (error) {
-      console.log('👀 - error', error)
+    } catch (error: any) {
+      if (error.code !== 'ENOENT') console.log('👀 - error', error)
     }
   }
 

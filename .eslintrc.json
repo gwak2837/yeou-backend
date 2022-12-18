@@ -31,6 +31,7 @@
   "plugins": ["@typescript-eslint"],
   "rules": {
     "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-unused-vars": "off",
 
     "import/no-unresolved": "off",
 

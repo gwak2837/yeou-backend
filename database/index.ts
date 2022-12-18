@@ -18,11 +18,20 @@ if (env === 'prod') {
   CSV_PATH = 'local'
 }
 
-export const PGURI = process.env.PGURI as string
 export const PROJECT_ENV = process.env.PROJECT_ENV as string
+export const PGURI = process.env.PGURI as string
 export const POSTGRES_CA = process.env.POSTGRES_CA as string
 export const POSTGRES_CERT = process.env.POSTGRES_CERT as string
 export const POSTGRES_KEY = process.env.POSTGRES_KEY as string
+
+if (!PROJECT_ENV) throw new Error('`PROJECT_ENV` 환경 변수를 설정해주세요.')
+if (!PGURI) throw new Error('`PGURI` 환경 변수를 설정해주세요.')
+
+if (PROJECT_ENV.startsWith('cloud') || PROJECT_ENV === 'local-prod') {
+  if (!POSTGRES_CA) throw new Error('`POSTGRES_CA` 환경 변수를 설정해주세요.')
+  if (!POSTGRES_CERT) throw new Error('`POSTGRES_CERT` 환경 변수를 설정해주세요.')
+  if (!POSTGRES_KEY) throw new Error('`POSTGRES_KEY` 환경 변수를 설정해주세요.')
+}
 
 console.log('👀 - process.env.PGURI', process.env.PGURI)
 

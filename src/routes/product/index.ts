@@ -1,9 +1,11 @@
 import { Type } from '@sinclair/typebox'
 import { load } from 'cheerio'
 
-import { BadRequestError } from '../common/fastify'
-import puppeteer from '../common/puppeteer'
-import { TFastify } from '.'
+import { BadRequestError } from '../../common/fastify'
+import { pool } from '../../common/postgres'
+import puppeteer from '../../common/puppeteer'
+import saveProductHistory from './sql/saveProductHistory.sql'
+import { TFastify } from '..'
 
 export default async function routes(fastify: TFastify, options: Record<string, unknown>) {
   const schema = {
@@ -13,9 +15,10 @@ export default async function routes(fastify: TFastify, options: Record<string, 
   }
 
   fastify.get('/product', { schema }, async (req, res) => {
-    const productURL = req.query.url
+    const rawURL = new URL(req.query.url)
+    rawURL.searchParams.sort()
+    const productURL = rawURL.toString()
 
-    // Headless browser
     const browser = await puppeteer.launch()
     const page = await browser.newPage()
     // 쿠팡 로그인 await page.goto('https://login.coupang.com/login/login.pang')
@@ -32,16 +35,23 @@ export default async function routes(fastify: TFastify, options: Record<string, 
 
     // HTML parsing
     const $ = load(await page.content())
+    const name = $('.prod-buy-header__title').text()
+    const option = $('.prod-option__item')
+      .toArray()
+      .map((e) => ({
+        title: $(e).find('.title').text(),
+        value: $(e).find('.value').text().trim(),
+      }))
+
     const originalPrice = $('.origin-price').text()
-    const price = $('.prod-sale-price > .total-price').text().trim()
-    const price2 = $('.prod-coupon-price > .total-price').text().trim()
+    const salePrice = $('.prod-sale-price > .total-price').text().trim()
+    const couponPrice = $('.prod-coupon-price > .total-price').text().trim()
     const coupon = $('.prod-coupon-download-item__on')
       .toArray()
       .map((e) => ({
         discount: $(e).find('.prod-coupon-price').text(),
         condition: $(e).find('.prod-coupon-desc').text(),
       }))
-
     const creditCard = $('.ccid-benefit-badge__inr')
       .toArray()
       .map((e) => ({
@@ -52,27 +62,32 @@ export default async function routes(fastify: TFastify, options: Record<string, 
           .map((e) => $(e).attr('src'))
           .map((imageUrl) => `https:${imageUrl}`),
       }))
+    const reward = $('.reward-cash-txt').text()
 
     const imageUrl = $('.prod-image__detail').attr('src')
     const reviewCount = $('#prod-review-nav-link > span.count').text()
-    const name = $('.prod-buy-header__title').text()
     const isOutOfStock = Boolean($('.oos-label').text())
+
+    const prices = [originalPrice, salePrice, couponPrice] as any[]
+    prices
+      .map((price) => price.replace(/,|원/g, ''))
+      .filter((price) => price)
+      .map((price) => +price)
+
+    pool.query(saveProductHistory, [name, imageUrl, productURL, isOutOfStock, Math.min(...prices)])
 
     return {
       name,
+      option,
       originalPrice,
-      price,
-      price2,
+      salePrice,
+      couponPrice,
       coupon,
       creditCard,
-      // creditCardCompanies,
+      reward,
       imageUrl: `https:${imageUrl}`,
       reviewCount,
       isOutOfStock,
     }
-
-    // Save result
-    // const { rows } = await pool.query('SELECT id FROM product WHERE url = $1', [productURL])
-    // pool.query('INSERT INTO product_history (price, product_id) values ($1, $2)', [price, rows[0].id])
   })
 }

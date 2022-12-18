@@ -18,8 +18,8 @@
     "clean": "rm -rf .yarn/cache .yarn/unplugged .yarn/install-state.gz out .pnp.*",
     "lint": "eslint . --fix --ignore-path .gitignore",
     "format": "prettier . --write",
-    "export": "tsc --project database/tsconfig.json && node database/dist/database/export.js",
-    "import": "tsc --project database/tsconfig.json && node database/dist/database/import.js",
+    "export": "tsc --project database/tsconfig.json && node database/dist/export.js",
+    "import": "tsc --project database/tsconfig.json && node database/dist/import.js",
     "postinstall": "husky install"
   },
   "dependencies": {
