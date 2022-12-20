@@ -5,6 +5,7 @@ declare module '@fastify/jwt' {
     payload: Record<string, unknown>
     user: {
       id: number
+      isFlareLane: boolean
       name?: string
       iat: number
       exp: number

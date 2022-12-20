@@ -1,6 +1,14 @@
 import pg from 'pg'
 
-import { PGURI, POSTGRES_CA, POSTGRES_CERT, POSTGRES_KEY, PROJECT_ENV } from '../common/constants'
+import {
+  NODE_ENV,
+  PGURI,
+  POSTGRES_CA,
+  POSTGRES_CERT,
+  POSTGRES_KEY,
+  PROJECT_ENV,
+} from '../common/constants'
+import { BadGatewayError } from './fastify'
 
 const { Pool } = pg
 
@@ -19,4 +27,13 @@ export const pool = new Pool({
       },
     },
   }),
+})
+
+pool.on('error', (err) => {
+  if (NODE_ENV === 'production') {
+    console.error(err.message)
+    throw BadGatewayError('Database query error')
+  } else {
+    throw BadGatewayError(err.message)
+  }
 })

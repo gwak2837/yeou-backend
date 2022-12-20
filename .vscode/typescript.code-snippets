@@ -2,9 +2,7 @@
   "Fastify Routes": {
     "prefix": "route",
     "body": [
-      "import { FastifyInstance } from 'fastify'",
-      "",
-      "export default async function routes(fastify: FastifyInstance, options: Record<string, unknown>) {",
+      "export default async function routes(fastify: TFastify, options: Record<string, unknown>) {",
       "  fastify.get('/${TM_FILENAME_BASE}', async (request, reply) => {",
       "    return { hello: '${TM_FILENAME_BASE}' }",
       "  })",

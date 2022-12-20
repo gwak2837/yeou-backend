@@ -10,21 +10,24 @@ GRANT ALL ON SCHEMA public TO lobinreview;
 CREATE TABLE "user" (
   id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   creation_time timestamptz DEFAULT CURRENT_TIMESTAMP,
+  flare_lane_device_id uuid UNIQUE,
   email varchar(50) UNIQUE,
   image_urls text[],
-  name varchar(30),
-  nickname varchar(30) UNIQUE,
-  oauth_bbaton varchar(100) NOT NULL UNIQUE,
+  name varchar(30) UNIQUE,
+  nickname varchar(30),
+  notification_method int[],
   oauth_google varchar(100) UNIQUE,
   oauth_kakao varchar(100) UNIQUE,
   oauth_naver varchar(100) UNIQUE,
-  phone_number varchar(20) UNIQUE
+  phone_number varchar(20) UNIQUE,
+  telegram_user_id int UNIQUE
 );
 
 CREATE TABLE product (
   id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   creation_time timestamptz DEFAULT CURRENT_TIMESTAMP,
   name varchar(100) NOT NULL,
+  option varchar(300),
   image_url text NOT NULL,
   url text NOT NULL UNIQUE
 );
@@ -33,7 +36,7 @@ CREATE TABLE product_history (
   id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   creation_time timestamptz DEFAULT CURRENT_TIMESTAMP,
   is_out_of_stock boolean NOT NULL DEFAULT FALSE,
-  price int NOT NULL,
+  price int,
   --
   product_id bigint NOT NULL REFERENCES product ON DELETE CASCADE
 );
@@ -46,13 +49,11 @@ CREATE TABLE hashtag (
 CREATE TABLE notification (
   id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   creation_time timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "type" int NOT NULL,
   content text NOT NULL,
   link_url text NOT NULL,
   is_read boolean NOT NULL DEFAULT FALSE,
   --
-  receiver_id bigint NOT NULL REFERENCES "user" ON DELETE CASCADE,
-  sender_id bigint REFERENCES "user" ON DELETE SET NULL
+  receiver_id bigint NOT NULL REFERENCES "user" ON DELETE CASCADE
 );
 
 CREATE TABLE post (
@@ -76,6 +77,13 @@ CREATE TABLE hashtag_x_post (
   PRIMARY KEY (hashtag_id, post_id)
 );
 
+CREATE TABLE post_x_mentioned_user (
+  post_id bigint REFERENCES post ON DELETE CASCADE,
+  user_id bigint REFERENCES "user" ON DELETE CASCADE,
+  --
+  PRIMARY KEY (post_id, user_id)
+);
+
 -- like
 CREATE TABLE post_x_user (
   post_id bigint REFERENCES post ON DELETE CASCADE,
@@ -84,11 +92,13 @@ CREATE TABLE post_x_user (
   PRIMARY KEY (post_id, user_id)
 );
 
-CREATE TABLE post_x_mentioned_user (
-  post_id bigint REFERENCES post ON DELETE CASCADE,
+-- 사용자가 알림 설정한 제품
+CREATE TABLE product_x_user (
+  product_id bigint REFERENCES product ON DELETE CASCADE,
   user_id bigint REFERENCES "user" ON DELETE CASCADE,
+  condition text,
   --
-  PRIMARY KEY (post_id, user_id)
+  PRIMARY KEY (product_id, user_id)
 );
 
 CREATE TABLE user_x_user (
@@ -97,4 +107,3 @@ CREATE TABLE user_x_user (
   --
   PRIMARY KEY (leader_id, follower_id)
 );
-

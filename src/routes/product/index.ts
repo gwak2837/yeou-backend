@@ -4,6 +4,8 @@ import { load } from 'cheerio'
 import { BadRequestError } from '../../common/fastify'
 import { pool } from '../../common/postgres'
 import puppeteer from '../../common/puppeteer'
+import evaluateNotificationCondition from './sql/evaluateNotificationCondition.sql'
+import { ISaveProductHistoryResult } from './sql/saveProductHistory'
 import saveProductHistory from './sql/saveProductHistory.sql'
 import { TFastify } from '..'
 
@@ -15,7 +17,12 @@ export default async function routes(fastify: TFastify, options: Record<string, 
   }
 
   fastify.get('/product', { schema }, async (req, res) => {
-    const rawURL = new URL(req.query.url)
+    let rawURL
+    try {
+      rawURL = new URL(req.query.url)
+    } catch (error) {
+      throw BadRequestError('잘못된 URL 주소입니다')
+    }
     rawURL.searchParams.sort()
     const productURL = rawURL.toString()
 
@@ -36,7 +43,7 @@ export default async function routes(fastify: TFastify, options: Record<string, 
     // HTML parsing
     const $ = load(await page.content())
     const name = $('.prod-buy-header__title').text()
-    const option = $('.prod-option__item')
+    const options = $('.prod-option__item')
       .toArray()
       .map((e) => ({
         title: $(e).find('.title').text(),
@@ -64,28 +71,41 @@ export default async function routes(fastify: TFastify, options: Record<string, 
       }))
     const reward = $('.reward-cash-txt').text()
 
-    const imageUrl = $('.prod-image__detail').attr('src')
+    const imageUrl = `https:${$('.prod-image__detail').attr('src')}`
     const reviewCount = $('#prod-review-nav-link > span.count').text()
     const isOutOfStock = Boolean($('.oos-label').text())
 
-    const prices = [originalPrice, salePrice, couponPrice] as any[]
-    prices
+    const prices = [originalPrice, salePrice, couponPrice]
       .map((price) => price.replace(/,|원/g, ''))
       .filter((price) => price)
       .map((price) => +price)
+    const minimumPrice = Math.min(...prices)
 
-    pool.query(saveProductHistory, [name, imageUrl, productURL, isOutOfStock, Math.min(...prices)])
+    pool
+      .query<ISaveProductHistoryResult>(saveProductHistory, [
+        name,
+        options.map((option) => option.value).join(','),
+        imageUrl,
+        productURL,
+        isOutOfStock,
+        minimumPrice,
+      ])
+      .then(({ rows }) => {
+        console.log('👀 - rows', rows)
+        // evaluateNotificationCondition
+      })
+      .catch((err) => console.error(err))
 
     return {
       name,
-      option,
+      options,
       originalPrice,
       salePrice,
       couponPrice,
       coupon,
       creditCard,
       reward,
-      imageUrl: `https:${imageUrl}`,
+      imageUrl,
       reviewCount,
       isOutOfStock,
     }

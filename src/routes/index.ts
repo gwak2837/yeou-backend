@@ -17,7 +17,9 @@ import {
   PORT,
   PROJECT_ENV,
 } from '../common/constants'
+import { telegramBot } from '../common/telegram'
 import authRoute from './auth'
+import authFlareLaneRoute from './auth/flare-lane'
 import authKakaoRoute from './auth/kakao'
 import productRoute from './product'
 import uploadRoute from './upload'
@@ -142,6 +144,12 @@ fastify.register(userRoute)
 fastify.register(uploadRoute)
 fastify.register(authRoute)
 fastify.register(authKakaoRoute)
+fastify.register(authFlareLaneRoute)
+
+telegramBot
+  .getChat('374162672')
+  .then((e) => console.log(e))
+  .catch((err) => console.log(err))
 
 export default async function startServer() {
   try {

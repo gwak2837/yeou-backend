@@ -28,6 +28,11 @@ export const PGURI = process.env.PGURI as string
 
 export const REDIS_CONNECTION_STRING = process.env.REDIS_CONNECTION_STRING as string
 
+export const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN as string
+
+export const FLARE_LANE_PROJECT_ID = process.env.FLARE_LANE_PROJECT_ID as string
+export const FLARE_LANE_API_KEY = process.env.FLARE_LANE_API_KEY as string
+
 if (!PROJECT_ENV) throw new Error('`PROJECT_ENV` 환경 변수를 설정해주세요.')
 if (!FRONTEND_URL) throw new Error('`FRONTEND_URL` 환경 변수를 설정해주세요.')
 if (!JWT_SECRET_KEY) throw new Error('`JWT_SECRET_KEY` 환경 변수를 설정해주세요.')
@@ -39,6 +44,11 @@ if (!KAKAO_CLIENT_SECRET) throw new Error('`KAKAO_CLIENT_SECRET` 환경 변수�
 if (!PGURI) throw new Error('`PGURI` 환경 변수를 설정해주세요.')
 
 if (!REDIS_CONNECTION_STRING) throw new Error('`REDIS_CONNECTION_STRING` 환경 변수를 설정해주세요.')
+
+if (!TELEGRAM_BOT_TOKEN) throw new Error('`TELEGRAM_BOT_TOKEN` 환경 변수를 설정해주세요.')
+
+if (!FLARE_LANE_PROJECT_ID) throw new Error('`FLARE_LANE_PROJECT_ID` 환경 변수를 설정해주세요.')
+if (!FLARE_LANE_API_KEY) throw new Error('`FLARE_LANE_API_KEY` 환경 변수를 설정해주세요.')
 
 // 개별
 export const LOCALHOST_HTTPS_KEY = process.env.LOCALHOST_HTTPS_KEY as string

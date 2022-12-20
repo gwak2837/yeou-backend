@@ -15,19 +15,31 @@ try {
   console.log('BEGIN')
   await client.query('BEGIN')
 
+  console.log('👀 - initialization')
   const initialization = readFileSync('database/initialization.sql', 'utf8').toString()
   await client.query(initialization)
-  console.log('👀 - initialization')
 
+  console.log('👀 - functions')
   const functions = readFileSync('database/functions.sql', 'utf8').toString()
   await client.query(functions)
-  console.log('👀 - functions')
 
   // 테이블 생성 순서와 동일하게
-  const tables = ['public.user']
+  const tables = [
+    'public.user',
+    'public.product',
+    'public.product_history',
+    'public.hashtag',
+    'public.notification',
+    'public.post',
+    'public.hashtag_x_post',
+    'public.post_x_mentioned_user',
+    'public.post_x_user',
+    'public.product_x_user',
+    'public.user_x_user',
+  ]
 
   // GENERATED ALWAYS AS IDENTITY 컬럼이 있는 테이블
-  const sequenceTables = ['"user"']
+  const sequenceTables = ['"user"', 'product', 'product_history', 'hashtag', 'notification', 'post']
 
   for (const table of tables) {
     console.log('👀 - table', table)
