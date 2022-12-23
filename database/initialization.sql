@@ -11,16 +11,22 @@ CREATE TABLE "user" (
   id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   creation_time timestamptz DEFAULT CURRENT_TIMESTAMP,
   flare_lane_device_id uuid UNIQUE,
-  email varchar(50) UNIQUE,
+  grade int NOT NULL DEFAULT 0,
+  email varchar(100) UNIQUE,
   image_urls text[],
-  name varchar(30) UNIQUE,
-  nickname varchar(30),
-  notification_method int[],
+  name varchar(50) UNIQUE,
+  nickname varchar(50),
   oauth_google varchar(100) UNIQUE,
   oauth_kakao varchar(100) UNIQUE,
   oauth_naver varchar(100) UNIQUE,
   phone_number varchar(20) UNIQUE,
-  telegram_user_id int UNIQUE
+  should_notify_by_email boolean NOT NULL DEFAULT FALSE,
+  should_notify_by_kakaotalk boolean NOT NULL DEFAULT FALSE,
+  should_notify_by_line boolean NOT NULL DEFAULT FALSE,
+  should_notify_by_phone boolean NOT NULL DEFAULT FALSE,
+  should_notify_by_telegram boolean NOT NULL DEFAULT FALSE,
+  should_notify_by_web_push boolean NOT NULL DEFAULT FALSE,
+  telegram_user_id bigint UNIQUE
 );
 
 CREATE TABLE product (
@@ -52,6 +58,7 @@ CREATE TABLE notification (
   content text NOT NULL,
   link_url text NOT NULL,
   is_read boolean NOT NULL DEFAULT FALSE,
+  flare_lane_notification_id int,
   --
   receiver_id bigint NOT NULL REFERENCES "user" ON DELETE CASCADE
 );

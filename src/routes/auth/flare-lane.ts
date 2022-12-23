@@ -1,11 +1,11 @@
 import { Type } from '@sinclair/typebox'
 
-import { pool } from '../../../database'
+import { pool } from '../../common/postgres'
 import { IGetFlareLaneUserResult } from './sql/getFlareLaneUser'
 import getFlareLaneUser from './sql/getFlareLaneUser.sql'
 import { TFastify } from '..'
 
-export default async function routes(fastify: TFastify, options: Record<string, unknown>) {
+export default async function routes(fastify: TFastify) {
   const schema = {
     headers: Type.Object({
       'device-id': Type.String({ format: 'uuid' }),

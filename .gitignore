@@ -147,3 +147,4 @@ dist
 cloud-storage-key.json
 database/data
 *.pem
+temp

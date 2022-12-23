@@ -1,5 +1,4 @@
 import { Telegram } from 'telegraf'
-import { message } from 'telegraf/filters'
 
 import { TELEGRAM_BOT_TOKEN } from './constants'
 

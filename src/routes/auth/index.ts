@@ -3,12 +3,11 @@ import { FastifyInstance } from 'fastify'
 
 import { UnauthorizedError } from '../../common/fastify'
 
-export default async function routes(fastify: FastifyInstance, options: Record<string, unknown>) {
-  fastify.get('/auth', async (request, reply) => {
+export default async function routes(fastify: FastifyInstance) {
+  fastify.get('/auth', async (request) => {
     const user = request.user
-    console.log('👀 - user', user)
 
-    if (!user) throw UnauthorizedError('로그인 후 시도해주세요')
+    if (!user) return null
 
     return {
       userId: user.id,

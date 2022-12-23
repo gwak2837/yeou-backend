@@ -146,11 +146,6 @@ fastify.register(authRoute)
 fastify.register(authKakaoRoute)
 fastify.register(authFlareLaneRoute)
 
-telegramBot
-  .getChat('374162672')
-  .then((e) => console.log(e))
-  .catch((err) => console.log(err))
-
 export default async function startServer() {
   try {
     return await fastify.listen({ port: +PORT, host: K_SERVICE ? '0.0.0.0' : 'localhost' })

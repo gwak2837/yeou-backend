@@ -2,7 +2,16 @@ CREATE FUNCTION save_product_history (_product_name varchar(100), _product_optio
   _product_image_url text, _product_url text, _is_out_of_stock boolean, _product_price int)
   RETURNS TABLE (
     condition text,
-    notification_method int[])
+    email varchar(100),
+    flare_lane_device_id uuid,
+    phone_number varchar(20),
+    should_notify_by_email boolean,
+    should_notify_by_kakaotalk boolean,
+    should_notify_by_line boolean,
+    should_notify_by_phone boolean,
+    should_notify_by_telegram boolean,
+    should_notify_by_web_push boolean,
+    telegram_user_id int)
   LANGUAGE plpgsql
   AS $$
 DECLARE
@@ -27,8 +36,17 @@ BEGIN
   --
   RETURN query
   SELECT
-    condition,
-    notification_method
+    product_x_user.condition,
+    "user".email,
+    "user".flare_lane_device_id,
+    "user".phone_number,
+    "user".should_notify_by_email,
+    "user".should_notify_by_kakaotalk,
+    "user".should_notify_by_line,
+    "user".should_notify_by_phone,
+    "user".should_notify_by_telegram,
+    "user".should_notify_by_web_push,
+    "user".telegram_user_id
   FROM
     product_x_user
     JOIN "user" ON "user".id = product_x_user.user_id;
@@ -46,8 +64,8 @@ BEGIN
   WHERE
     flare_lane_device_id = _flare_lane_device_id;
   IF NOT found THEN
-    INSERT INTO "user" (flare_lane_device_id, notification_method)
-      VALUES (_flare_lane_device_id, ARRAY[1])
+    INSERT INTO "user" (flare_lane_device_id, should_notify_by_web_push)
+      VALUES (_flare_lane_device_id, TRUE)
     RETURNING
       id INTO user_id;
   END IF;
