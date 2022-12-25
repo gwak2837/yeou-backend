@@ -55,10 +55,12 @@ CREATE TABLE hashtag (
 CREATE TABLE notification (
   id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   creation_time timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  title varchar(100) NOT NULL,
   content text NOT NULL,
+  third_party_id text,
   link_url text NOT NULL,
   is_read boolean NOT NULL DEFAULT FALSE,
-  flare_lane_notification_id int,
+  type int NOT NULL,
   --
   receiver_id bigint NOT NULL REFERENCES "user" ON DELETE CASCADE
 );
