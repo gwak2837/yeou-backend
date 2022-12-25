@@ -286,7 +286,7 @@ yarn start
 3. Docker 환경에서 Node.js 서버, PostgreSQL 서버, Redis 서버를 실행합니다.
 
 ```
-docker-compose --env-file .env.local.docker up --detach --build --force-recreate
+docker compose --env-file .env.local.docker up --detach --build --force-recreate
 ```
 
 ### CI/CD
@@ -1545,14 +1545,14 @@ ENTRYPOINT ["node", "out/index.cjs"]
 
 ```yml
 services:
-  coopang-backend:
+  yeou-backend:
     build: .
-    container_name: coopang-api
+    container_name: yeou-api
     depends_on:
       - redis
       - postgres
     env_file: .env.docker.local
-    image: coopang-api:latest
+    image: yeou-api:latest
     restart: on-failure
     ports:
       - 4002:4002
@@ -1560,7 +1560,7 @@ services:
   redis:
     image: redis:7-alpine
     command: redis-server --loglevel warning
-    container_name: coopang-redis
+    container_name: yeou-redis
     ports:
       - 6379
     restart: on-failure
@@ -1569,7 +1569,7 @@ services:
 
   postgres:
     image: postgres:14-alpine
-    container_name: coopang-postgres
+    container_name: yeou-postgres
     environment:
       POSTGRES_PASSWORD: example
       POSTGRES_HOST_AUTH_METHOD: trust
@@ -1581,7 +1581,7 @@ services:
 
   postgres-archive:
     image: postgres:14-alpine
-    container_name: coopang-postgres-archive
+    container_name: yeou-postgres-archive
     environment:
       POSTGRES_PASSWORD: example2
       POSTGRES_HOST_AUTH_METHOD: trust

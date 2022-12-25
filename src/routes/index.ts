@@ -63,10 +63,10 @@ fastify.get('/', schema, async (request, _) => {
 fastify.register(cors, {
   origin: [
     'http://localhost:3000',
-    'https://coopang.app',
-    'https://coopang.vercel.app',
-    'https://coopang-git-dev-gwak2837.vercel.app',
-    /^https:\/\/coopang-[a-z0-9]{1,20}-gwak2837\.vercel\.app/,
+    'https://yeou.app',
+    'https://yeou.vercel.app',
+    'https://yeou-git-dev-gwak2837.vercel.app',
+    /^https:\/\/yeou-[a-z0-9]{1,20}-gwak2837\.vercel\.app/,
   ],
 })
 

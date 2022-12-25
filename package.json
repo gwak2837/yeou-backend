@@ -1,16 +1,16 @@
 {
-  "name": "coopang-backend",
+  "name": "yeou-backend",
   "version": "0.1.0",
-  "description": "coopang-backend",
-  "homepage": "https://github.com/rmfpdlxmtidl/coopang-backend#readme",
+  "description": "yeou-backend",
+  "homepage": "https://github.com/gwak2837/yeou-backend#readme",
   "bugs": {
-    "url": "https://github.com/rmfpdlxmtidl/coopang-backend/issues",
+    "url": "https://github.com/gwak2837/yeou-backend/issues",
     "email": "gwak2837@kakao.com"
   },
   "license": "GPL-3.0-only",
   "author": "Taeuk Gwak <gwak2837@kakao.com>",
   "main": "out/index.cjs",
-  "repository": "https://github.com/rmfpdlxmtidl/coopang-backend.git",
+  "repository": "https://github.com/gwak2837/yeou-backend.git",
   "scripts": {
     "dev": "src/dev.sh",
     "build": "NODE_ENV=production node esbuild.js",
