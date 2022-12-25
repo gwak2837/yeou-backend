@@ -14,7 +14,7 @@
   "scripts": {
     "dev": "src/dev.sh",
     "build": "NODE_ENV=production node esbuild.js",
-    "start": "yarn build && NODE_ENV=production node -r dotenv/config out/index.cjs dotenv_config_path=.env.local",
+    "start": "NODE_ENV=production node -r dotenv/config out/index.cjs dotenv_config_path=.env.local",
     "clean": "rm -rf .yarn/cache .yarn/unplugged .yarn/install-state.gz out .pnp.*",
     "lint": "eslint . --fix --ignore-path .gitignore",
     "format": "prettier . --write",

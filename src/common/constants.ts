@@ -70,7 +70,7 @@ if (PROJECT_ENV.startsWith('local')) {
   if (!LOCALHOST_HTTPS_CERT) throw new Error('`LOCALHOST_HTTPS_CERT` 환경 변수를 설정해주세요.')
 }
 
-if (PROJECT_ENV.startsWith('cloud') || PROJECT_ENV === 'local-prod') {
+if (PROJECT_ENV.startsWith('cloud') || PROJECT_ENV === 'local-docker') {
   if (!POSTGRES_CA) throw new Error('`POSTGRES_CA` 환경 변수를 설정해주세요.')
   if (!POSTGRES_CERT) throw new Error('`POSTGRES_CERT` 환경 변수를 설정해주세요.')
   if (!POSTGRES_KEY) throw new Error('`POSTGRES_KEY` 환경 변수를 설정해주세요.')

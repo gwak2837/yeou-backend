@@ -13,7 +13,7 @@ export const redisClient = createClient({
 
   ...((PROJECT_ENV === 'cloud-dev' ||
     PROJECT_ENV === 'cloud-prod' ||
-    PROJECT_ENV === 'local-prod') && {
+    PROJECT_ENV === 'local-docker') && {
     socket: {
       tls: true,
       ca: `-----BEGIN CERTIFICATE-----\n${REDIS_CA}\n-----END CERTIFICATE-----`,

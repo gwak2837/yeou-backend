@@ -27,7 +27,7 @@ export const POSTGRES_KEY = process.env.POSTGRES_KEY as string
 if (!PROJECT_ENV) throw new Error('`PROJECT_ENV` 환경 변수를 설정해주세요.')
 if (!PGURI) throw new Error('`PGURI` 환경 변수를 설정해주세요.')
 
-if (PROJECT_ENV.startsWith('cloud') || PROJECT_ENV === 'local-prod') {
+if (PROJECT_ENV.startsWith('cloud') || PROJECT_ENV === 'local-docker') {
   if (!POSTGRES_CA) throw new Error('`POSTGRES_CA` 환경 변수를 설정해주세요.')
   if (!POSTGRES_CERT) throw new Error('`POSTGRES_CERT` 환경 변수를 설정해주세요.')
   if (!POSTGRES_KEY) throw new Error('`POSTGRES_KEY` 환경 변수를 설정해주세요.')
@@ -40,7 +40,7 @@ export const pool = new Pool({
 
   ...((PROJECT_ENV === 'cloud-dev' ||
     PROJECT_ENV === 'cloud-prod' ||
-    PROJECT_ENV === 'local-prod') && {
+    PROJECT_ENV === 'local-docker') && {
     ssl: {
       ca: `-----BEGIN CERTIFICATE-----\n${POSTGRES_CA}\n-----END CERTIFICATE-----`,
       key: `-----BEGIN PRIVATE KEY-----\n${POSTGRES_KEY}\n-----END PRIVATE KEY-----`,

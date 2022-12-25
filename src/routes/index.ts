@@ -17,7 +17,6 @@ import {
   PORT,
   PROJECT_ENV,
 } from '../common/constants'
-import { telegramBot } from '../common/telegram'
 import authRoute from './auth'
 import authFlareLaneRoute from './auth/flare-lane'
 import authKakaoRoute from './auth/kakao'
@@ -148,7 +147,10 @@ fastify.register(authFlareLaneRoute)
 
 export default async function startServer() {
   try {
-    return await fastify.listen({ port: +PORT, host: K_SERVICE ? '0.0.0.0' : 'localhost' })
+    return await fastify.listen({
+      port: +PORT,
+      host: K_SERVICE || PROJECT_ENV === 'local-docker' ? '0.0.0.0' : 'localhost',
+    })
   } catch (err) {
     fastify.log.error(err)
     throw new Error()

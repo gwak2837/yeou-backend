@@ -14,3 +14,6 @@
 *.ttf binary
 *.woff binary
 *.woff2 binary
+
+/.yarn/releases/** binary
+/.yarn/plugins/** binary

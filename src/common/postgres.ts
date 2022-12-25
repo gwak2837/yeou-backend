@@ -17,7 +17,7 @@ export const pool = new Pool({
 
   ...((PROJECT_ENV === 'cloud-dev' ||
     PROJECT_ENV === 'cloud-prod' ||
-    PROJECT_ENV === 'local-prod') && {
+    PROJECT_ENV === 'local-docker') && {
     ssl: {
       ca: `-----BEGIN CERTIFICATE-----\n${POSTGRES_CA}\n-----END CERTIFICATE-----`,
       key: `-----BEGIN PRIVATE KEY-----\n${POSTGRES_KEY}\n-----END PRIVATE KEY-----`,
