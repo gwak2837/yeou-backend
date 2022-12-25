@@ -65,6 +65,8 @@ export default async function routes(fastify: TFastify) {
       }
     })()
 
+    page.close()
+
     pool
       .query<ISaveProductHistoryResult>(saveProductHistory, [
         name,

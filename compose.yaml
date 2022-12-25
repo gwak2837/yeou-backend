@@ -9,7 +9,7 @@ services:
     image: yeou-api:latest
     restart: on-failure
     ports:
-      - 4002:4002
+      - 4000:4000
 
   redis:
     image: redis:7-alpine
