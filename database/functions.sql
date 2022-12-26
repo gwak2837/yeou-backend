@@ -11,7 +11,7 @@ CREATE FUNCTION save_product_history (_product_name varchar(100), _product_optio
     should_notify_by_phone boolean,
     should_notify_by_telegram boolean,
     should_notify_by_web_push boolean,
-    telegram_user_id int)
+    telegram_user_id bigint)
   LANGUAGE plpgsql
   AS $$
 DECLARE

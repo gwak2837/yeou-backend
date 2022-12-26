@@ -3,3 +3,5 @@
 . "$(dirname -- "$0")/common.sh"
 
 yarn tsc --noEmit
+yarn export && yarn import
+yarn export prod && yarn import prod
