@@ -26,8 +26,9 @@ for (const row of rows) {
     )
 
     for (const row2 of rows2) {
-      const tableName = row2.tablename
       fileCount += 1
+
+      const tableName = row2.tablename
       console.log(`👀 - ${schemaName}.${tableName}`)
 
       const csvPath = `database/data/${CSV_PATH}/${schemaName}.${tableName}.csv`

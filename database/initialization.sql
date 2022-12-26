@@ -32,9 +32,9 @@ CREATE TABLE "user" (
 CREATE TABLE product (
   id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   creation_time timestamptz DEFAULT CURRENT_TIMESTAMP,
-  name varchar(100) NOT NULL,
+  name varchar(100),
   option varchar(300),
-  image_url text NOT NULL,
+  image_url text,
   url text NOT NULL UNIQUE
 );
 

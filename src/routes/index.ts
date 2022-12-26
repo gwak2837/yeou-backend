@@ -25,7 +25,7 @@ import uploadRoute from './upload'
 import userRoute from './user'
 
 const fastify = Fastify({
-  logger: NODE_ENV === 'development',
+  // logger: NODE_ENV === 'development',
   http2: true,
 
   ...(PROJECT_ENV.startsWith('local') && {

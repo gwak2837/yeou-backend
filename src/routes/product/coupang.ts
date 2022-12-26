@@ -21,9 +21,18 @@ export default async function getCoupangProductInfo(page: Page) {
       title: $(e).find('.title').text(),
       value: $(e).find('.value').text().trim(),
     }))
-  const originalPrice = $('.origin-price').text()
-  const salePrice = $('.prod-sale-price > .total-price').text().trim()
-  const couponPrice = $('.prod-coupon-price > .total-price').text().trim()
+  const originalPrice = $('.origin-price')
+    .text()
+    .replace(/[^0-9]/g, '')
+  const salePrice = $('.prod-sale-price > .total-price')
+    .text()
+    .replace(/[^0-9]/g, '')
+  const couponPrice = $('.prod-coupon-price > .total-price')
+    .text()
+    .replace(/[^0-9]/g, '')
+  const reward = +$('.reward-cash-txt')
+    .text()
+    .replace(/[^0-9]/g, '')
   const coupon = $('.prod-coupon-download-item__on')
     .toArray()
     .map((e) => ({
@@ -40,29 +49,27 @@ export default async function getCoupangProductInfo(page: Page) {
         .map((e) => $(e).attr('src'))
         .map((imageUrl) => `https:${imageUrl}`),
     }))
-  const reward = $('.reward-cash-txt').text()
   const imageUrl = `https:${$('.prod-image__detail').attr('src')}`
   const reviewCount = $('#prod-review-nav-link > span.count').text()
   const isOutOfStock = Boolean($('.oos-label').text())
 
   const prices = [originalPrice, salePrice, couponPrice]
-    .map((price) => price.replace(/,|원/g, ''))
     .filter((price) => price)
     .map((price) => +price)
-  const minimumPrice = Math.min(...prices)
+  const minimumPrice = Math.min(...prices) - reward
 
   return {
     name,
     options,
-    originalPrice,
-    salePrice,
-    couponPrice,
-    coupon,
-    creditCard,
+    originalPrice: originalPrice ? +originalPrice : null,
+    salePrice: salePrice ? +salePrice : null,
+    couponPrice: couponPrice ? +couponPrice : null,
     reward,
+    coupon,
+    minimumPrice,
+    creditCard,
     imageUrl,
     reviewCount,
     isOutOfStock,
-    minimumPrice,
   }
 }

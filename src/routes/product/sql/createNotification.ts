@@ -13,13 +13,13 @@ export interface ICreateNotificationQuery {
   result: ICreateNotificationResult;
 }
 
-const createNotificationIR: any = {"usedParamSet":{},"params":[],"statement":"INSERT INTO notification (title, content, third_party_id, link_url, type)\n  VALUES ($1, $2, $3, $4, $5)"};
+const createNotificationIR: any = {"usedParamSet":{},"params":[],"statement":"INSERT INTO notification (title, content, third_party_id, link_url, type, receiver_id)\n  VALUES ($1, $2, $3, $4, $5, $6)"};
 
 /**
  * Query generated from SQL:
  * ```
- * INSERT INTO notification (title, content, third_party_id, link_url, type)
- *   VALUES ($1, $2, $3, $4, $5)
+ * INSERT INTO notification (title, content, third_party_id, link_url, type, receiver_id)
+ *   VALUES ($1, $2, $3, $4, $5, $6)
  * ```
  */
 export const createNotification = new PreparedQuery<ICreateNotificationParams,ICreateNotificationResult>(createNotificationIR);
