@@ -14,4 +14,5 @@ SELECT
 FROM
   "user"
   JOIN product_x_user ON product_x_user.user_id = "user".id
-    AND product_x_user.product_id = $1;
+    AND product_x_user.product_id = $1
+    AND product_x_user.last_check_time < $2;

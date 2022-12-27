@@ -1,7 +1,17 @@
 import { load } from 'cheerio'
-import { Page } from 'puppeteer'
+import { Browser, Page } from 'puppeteer'
 
-export default async function getCoupangProductInfo(page: Page) {
+import { BadRequestError } from '../../common/fastify'
+
+export default async function getCoupangProductInfo(browser: Browser, url: string) {
+  const page = await browser.newPage()
+
+  try {
+    await page.goto(url)
+  } catch (err) {
+    throw BadRequestError('해당 URL 접속에 실패했습니다')
+  }
+
   // 쿠팡 로그인
   // await page.goto('https://login.coupang.com/login/login.pang')
 
@@ -12,8 +22,10 @@ export default async function getCoupangProductInfo(page: Page) {
   if (couponButtonStyle !== 'display: none;')
     await page.waitForSelector('.prod-coupon-download-content')
 
-  // HTML 분석 및 정보 크롤링
   const $ = load(await page.content())
+  page.close()
+
+  // HTML 분석 및 정보 크롤링
   const name = $('.prod-buy-header__title').text()
   const options = $('.prod-option__item')
     .toArray()

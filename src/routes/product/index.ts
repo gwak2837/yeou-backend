@@ -14,7 +14,18 @@ import { IGetProductSubscriptionsResult } from './sql/getProductSubscriptions'
 import getProductSubscriptions from './sql/getProductSubscriptions.sql'
 import saveProductHistory from './sql/saveProductHistory.sql'
 import updateProduct from './sql/updateProduct.sql'
+import updateSubscription from './sql/updateSubscription.sql'
 import { TFastify } from '..'
+
+type Condition = {
+  conditions: {
+    limit: number
+    fluctuation: 'more' | 'less'
+    unit: number
+    hasCardDiscount: boolean
+    hasCouponDiscount: boolean
+  }[]
+}
 
 export default async function routes(fastify: TFastify) {
   const schema = {
@@ -27,23 +38,34 @@ export default async function routes(fastify: TFastify) {
     const user = req.user
     if (!user) throw UnauthorizedError('로그인 후 시도해주세요')
 
-    let rawURL
+    let rawURL: URL
     try {
       rawURL = new URL(req.query.url)
     } catch (error) {
       throw BadRequestError('URL 형식이 잘못됐습니다')
     }
 
-    rawURL.searchParams.sort()
-    const productURL = rawURL.toString()
     const hostname = rawURL.hostname
 
-    const page = await (await puppeteer.browser).newPage()
-    try {
-      await page.goto(productURL)
-    } catch (err) {
-      throw BadRequestError('해당 URL 접속에 실패했습니다')
+    switch (hostname) {
+      case 'www.coupang.com':
+      case 'link.coupang.com':
+        for (const paramKey of rawURL.searchParams.keys()) {
+          if (paramKey !== 'vendorItemId' && paramKey !== 'itemId') {
+            rawURL.searchParams.delete(paramKey)
+          }
+        }
+        break
+      case 'ohou.se':
+      case 'prod.danawa.com':
+        throw NotImplementedError('지원 예정입니다')
+      default:
+        throw BadRequestError('지원하지 않는 URL 주소입니다')
     }
+
+    rawURL.searchParams.sort()
+    const productURL = rawURL.toString()
+    const browser = await puppeteer.browser
 
     const [{ rows }, productFromWeb] = await Promise.all([
       pool.query<IGetOrCreateProductResult>(getOrCreateProduct, [productURL, user.id]),
@@ -51,19 +73,17 @@ export default async function routes(fastify: TFastify) {
         switch (hostname) {
           case 'www.coupang.com':
           case 'link.coupang.com':
-            return getCoupangProductInfo(page)
-          case 'prod.danawa.com':
-          case 'ohou.se':
-            throw NotImplementedError('지원 예정입니다')
-          default:
-            throw BadRequestError('지원하지 않는 URL 주소입니다')
+            return getCoupangProductInfo(browser, productURL)
+          // case 'prod.danawa.com':
+          //   return
+          // case 'ohou.se':
+          //   return
         }
       })(),
     ])
 
-    page.close()
-
     const productFromDB = rows[0]
+    const productId = productFromDB.product_id
 
     const {
       name,
@@ -80,25 +100,35 @@ export default async function routes(fastify: TFastify) {
       minimumPrice,
     } = productFromWeb
 
+    // TODO: 아래 연속되는 pool.query 하나로 합치키
     if (productFromDB.is_new) {
-      pool.query(updateProduct, [name, options, imageUrl, productFromDB.product_id])
+      pool.query(updateProduct, [name, options, imageUrl, productId])
     }
 
-    pool.query(saveProductHistory, [isOutOfStock, minimumPrice, productFromDB.product_id])
+    pool.query(saveProductHistory, [isOutOfStock, minimumPrice, productId])
+
+    const oneHourBefore = new Date()
+    oneHourBefore.setHours(oneHourBefore.getHours() - 1)
 
     pool
-      .query<IGetProductSubscriptionsResult>(getProductSubscriptions, [productFromDB.product_id])
+      .query<IGetProductSubscriptionsResult>(getProductSubscriptions, [
+        productId,
+        oneHourBefore, // 알림 간 최소 대기 시간
+      ])
       .then(async ({ rows }) => {
         for (const row of rows) {
-          const rawCondition = row.condition
+          const condition = row.condition ? (JSON.parse(row.condition) as Condition) : null
+          if (!condition) continue
+          if (!evaluate(condition, productFromWeb)) continue
 
-          if (rawCondition) {
-            const condition = JSON.parse(rawCondition)
-            if (!evaluate(condition)) continue
-          }
+          const firstCondition = condition.conditions[0]
+          const fluctuation = firstCondition.fluctuation === 'more' ? '상승' : '하락'
+          const option = options.map((option) => option.value).join(', ')
 
-          const title = `${name} % 하락`
-          const content = `${minimumPrice}원 도달`
+          const title = `${name} ${firstCondition.limit}원 도달`
+          const content = `${name} ${option} ${minimumPrice}원으로 ${fluctuation}`
+          const channels = []
+          let thirdPartyId
 
           // Web push notification
           const flareLaneDeviceId = row.flare_lane_device_id
@@ -125,14 +155,8 @@ export default async function routes(fastify: TFastify) {
             const result = (await response.json()) as Record<string, any>
 
             if (result.data) {
-              pool.query(createNotification, [
-                title,
-                content,
-                result.data.id,
-                productURL,
-                0,
-                user.id,
-              ])
+              thirdPartyId = result.data.id
+              channels.push(0)
             } else {
               console.error(result)
             }
@@ -144,14 +168,30 @@ export default async function routes(fastify: TFastify) {
           if (row.should_notify_by_telegram && telegramUserId) {
             const a = await telegramBot.sendMessage(telegramUserId, `${title}\n\n${content}\n\n`)
 
-            pool.query(createNotification, [title, content, a.message_id, productURL, 1, user.id])
+            if (a.message_id) {
+              thirdPartyId = a.message_id
+            } else {
+              console.error(a)
+            }
           }
+
+          // TODO: 아래 update처럼, 모든 insert 한번에 하기
+          pool.query(createNotification, [
+            title,
+            channels,
+            content,
+            thirdPartyId,
+            productURL,
+            user.id,
+          ])
         }
+
+        pool.query(updateSubscription, [productId])
       })
       .catch((reason) => console.error(reason))
 
     return {
-      id: productFromDB.product_id,
+      id: productId,
       name,
       options,
       originalPrice,
@@ -169,6 +209,12 @@ export default async function routes(fastify: TFastify) {
   })
 }
 
-function evaluate(condition: Record<string, any>) {
-  return condition.send
+function evaluate(condition: Condition, productFromWeb: Record<string, any>) {
+  const firstCondition = condition.conditions[0]
+
+  if (firstCondition.fluctuation === 'more') {
+    return firstCondition.limit < productFromWeb.minimumPrice - firstCondition.unit
+  } else {
+    return firstCondition.limit > productFromWeb.minimumPrice + firstCondition.unit
+  }
 }

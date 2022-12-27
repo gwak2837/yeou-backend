@@ -57,10 +57,10 @@ CREATE TABLE notification (
   creation_time timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
   title varchar(100) NOT NULL,
   content text NOT NULL,
-  third_party_id text,
-  link_url text NOT NULL,
+  channels int[] NOT NULL,
   is_read boolean NOT NULL DEFAULT FALSE,
-  type int NOT NULL,
+  link_url text NOT NULL,
+  third_party_id text,
   --
   receiver_id bigint NOT NULL REFERENCES "user" ON DELETE CASCADE
 );
@@ -106,6 +106,7 @@ CREATE TABLE product_x_user (
   product_id bigint REFERENCES product ON DELETE CASCADE,
   user_id bigint REFERENCES "user" ON DELETE CASCADE,
   condition text,
+  last_check_time timestamptz,
   --
   PRIMARY KEY (product_id, user_id)
 );
