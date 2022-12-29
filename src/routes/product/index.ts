@@ -18,13 +18,14 @@ import updateSubscription from './sql/updateSubscription.sql'
 import { TFastify } from '..'
 
 type Condition = {
-  conditions: {
+  prices: {
     limit: number
     fluctuation: 'more' | 'less'
     unit: number
-    hasCardDiscount: boolean
-    hasCouponDiscount: boolean
   }[]
+  hasCardDiscount: boolean
+  hasCouponDiscount: boolean
+  canBuy: boolean
 }
 
 export default async function routes(fastify: TFastify) {
@@ -46,6 +47,8 @@ export default async function routes(fastify: TFastify) {
     }
 
     const hostname = rawURL.hostname
+
+    // TODO: 수익 링크로 전환하기
 
     switch (hostname) {
       case 'www.coupang.com':
@@ -91,8 +94,8 @@ export default async function routes(fastify: TFastify) {
       originalPrice,
       salePrice,
       couponPrice,
-      coupon,
-      creditCard,
+      coupons,
+      creditCards,
       reward,
       imageUrl,
       reviewCount,
@@ -121,7 +124,8 @@ export default async function routes(fastify: TFastify) {
           if (!condition) continue
           if (!evaluate(condition, productFromWeb)) continue
 
-          const firstCondition = condition.conditions[0]
+          // TODO: 여러 condition 처리
+          const firstCondition = condition.prices[0]
           const fluctuation = firstCondition.fluctuation === 'more' ? '상승' : '하락'
           const option = options.map((option) => option.value).join(', ')
 
@@ -175,6 +179,8 @@ export default async function routes(fastify: TFastify) {
             }
           }
 
+          // Slack notification
+
           // TODO: 아래 update처럼, 모든 insert 한번에 하기
           pool.query(createNotification, [
             title,
@@ -199,18 +205,18 @@ export default async function routes(fastify: TFastify) {
       couponPrice,
       reward,
       minimumPrice,
-      coupon,
-      creditCard,
+      coupons,
+      creditCards,
       imageUrl,
       reviewCount,
       isOutOfStock,
-      isSubscribed: productFromDB.is_subscribed !== null,
+      notificationCondition: productFromDB.condition ? JSON.parse(productFromDB.condition) : null,
     }
   })
 }
 
 function evaluate(condition: Condition, productFromWeb: Record<string, any>) {
-  const firstCondition = condition.conditions[0]
+  const firstCondition = condition.prices[0]
 
   if (firstCondition.fluctuation === 'more') {
     return firstCondition.limit < productFromWeb.minimumPrice - firstCondition.unit

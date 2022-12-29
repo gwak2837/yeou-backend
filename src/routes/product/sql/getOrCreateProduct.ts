@@ -6,8 +6,8 @@ export type IGetOrCreateProductParams = void;
 
 /** 'GetOrCreateProduct' return type */
 export interface IGetOrCreateProductResult {
+  condition: string | null;
   is_new: boolean | null;
-  is_subscribed: string | null;
   product_id: string | null;
 }
 
@@ -17,7 +17,7 @@ export interface IGetOrCreateProductQuery {
   result: IGetOrCreateProductResult;
 }
 
-const getOrCreateProductIR: any = {"usedParamSet":{},"params":[],"statement":"SELECT\n  product_id,\n  is_new,\n  is_subscribed\nFROM\n  get_or_create_product ($1, $2)"};
+const getOrCreateProductIR: any = {"usedParamSet":{},"params":[],"statement":"SELECT\n  product_id,\n  is_new,\n  condition\nFROM\n  get_or_create_product ($1, $2)"};
 
 /**
  * Query generated from SQL:
@@ -25,7 +25,7 @@ const getOrCreateProductIR: any = {"usedParamSet":{},"params":[],"statement":"SE
  * SELECT
  *   product_id,
  *   is_new,
- *   is_subscribed
+ *   condition
  * FROM
  *   get_or_create_product ($1, $2)
  * ```

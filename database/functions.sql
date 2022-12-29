@@ -17,7 +17,7 @@ BEGIN
 END
 $$;
 
-CREATE FUNCTION toggle_subscription (_product_id bigint, _user_id bigint, out result boolean)
+CREATE FUNCTION toggle_subscription (_product_id bigint, _user_id bigint, _condition text, out result boolean)
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -33,22 +33,22 @@ BEGIN
       AND user_id = _user_id;
     result = FALSE;
   ELSE
-    INSERT INTO product_x_user (product_id, user_id)
-      VALUES (_product_id, _user_id);
+    INSERT INTO product_x_user (product_id, user_id, condition)
+      VALUES (_product_id, _user_id, _condition);
     result = TRUE;
   END IF;
 END
 $$;
 
 CREATE FUNCTION get_or_create_product (_product_url text, _user_id bigint, out product_id bigint,
-  out is_new boolean, out is_subscribed bigint)
+  out is_new boolean, out condition text)
 LANGUAGE plpgsql
 AS $$
 BEGIN
   SELECT
     id,
-    product_x_user.product_id INTO product_id,
-    is_subscribed
+    product_x_user.condition INTO product_id,
+    condition
   FROM
     product
   LEFT JOIN product_x_user ON product_x_user.product_id = product.id

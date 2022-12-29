@@ -45,13 +45,13 @@ export default async function getCoupangProductInfo(browser: Browser, url: strin
   const reward = +$('.reward-cash-txt')
     .text()
     .replace(/[^0-9]/g, '')
-  const coupon = $('.prod-coupon-download-item__on')
+  const coupons = $('.prod-coupon-download-item__on')
     .toArray()
     .map((e) => ({
       discount: $(e).find('.prod-coupon-price').text(),
       condition: $(e).find('.prod-coupon-desc').text(),
     }))
-  const creditCard = $('.ccid-benefit-badge__inr')
+  const creditCards = $('.ccid-benefit-badge__inr')
     .toArray()
     .map((e) => ({
       discount: $(e).find('.benefit-label > b').text(),
@@ -77,9 +77,9 @@ export default async function getCoupangProductInfo(browser: Browser, url: strin
     salePrice: salePrice ? +salePrice : null,
     couponPrice: couponPrice ? +couponPrice : null,
     reward,
-    coupon,
+    coupons,
     minimumPrice,
-    creditCard,
+    creditCards,
     imageUrl,
     reviewCount,
     isOutOfStock,

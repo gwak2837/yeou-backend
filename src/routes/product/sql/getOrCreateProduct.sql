@@ -2,6 +2,6 @@
 SELECT
   product_id,
   is_new,
-  is_subscribed
+  condition
 FROM
   get_or_create_product ($1, $2);

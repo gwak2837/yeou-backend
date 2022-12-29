@@ -11,6 +11,18 @@ export default async function routes(fastify: TFastify) {
     params: Type.Object({
       id: Type.Number(),
     }),
+    body: Type.Object({
+      prices: Type.Array(
+        Type.Object({
+          limit: Type.Number(),
+          fluctuation: Type.Union([Type.Literal('more'), Type.Literal('less')]),
+          unit: Type.Number(),
+        })
+      ),
+      hasCardDiscount: Type.Boolean(),
+      hasCouponDiscount: Type.Boolean(),
+      canBuy: Type.Boolean(),
+    }),
   }
 
   fastify.post('/product/:id/subscribe', { schema }, async (req, reply) => {
@@ -20,6 +32,8 @@ export default async function routes(fastify: TFastify) {
     const { rows } = await pool.query<IToggleSubscriptionResult>(toggleSubscription, [
       req.params.id,
       user.id,
+      req.body,
+      // JSON.stringify(req.body),
     ])
 
     return { isSubscribed: rows[0].result }
