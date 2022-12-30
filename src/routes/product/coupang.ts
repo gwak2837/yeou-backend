@@ -2,6 +2,7 @@ import { load } from 'cheerio'
 import { Browser, Page } from 'puppeteer'
 
 import { BadRequestError } from '../../common/fastify'
+import { KoreanToNum } from '../../common/utils'
 
 export default async function getCoupangProductInfo(browser: Browser, url: string) {
   const page = await browser.newPage()
@@ -22,10 +23,21 @@ export default async function getCoupangProductInfo(browser: Browser, url: strin
   if (couponButtonStyle !== 'display: none;')
     await page.waitForSelector('.prod-coupon-download-content')
 
-  const $ = load(await page.content())
+  // 카드 할인 정보 대기
+  let cardDiscountFrame
+  if ((await page.$('.ccid-detail-help-icon')) !== null) {
+    await page.click('.ccid-detail-help-icon')
+    const elementHandle = await page.waitForSelector('#creditCardBenefitContent > iframe')
+    cardDiscountFrame = await elementHandle?.contentFrame()
+    await cardDiscountFrame?.waitForSelector('#react-root > div > div:nth-child(2) > table > tbody')
+  }
+
+  const content = await page.content()
+  const cardDiscountContent = await cardDiscountFrame?.content()
   page.close()
 
   // HTML 분석 및 정보 크롤링
+  const $ = load(content)
   const name = $('.prod-buy-header__title').text()
   const options = $('.prod-option__item')
     .toArray()
@@ -33,13 +45,13 @@ export default async function getCoupangProductInfo(browser: Browser, url: strin
       title: $(e).find('.title').text(),
       value: $(e).find('.value').text().trim(),
     }))
-  const originalPrice = $('.origin-price')
+  const originalPrice = +$('.origin-price')
     .text()
     .replace(/[^0-9]/g, '')
-  const salePrice = $('.prod-sale-price > .total-price')
+  const salePrice = +$('.prod-sale-price > .total-price')
     .text()
     .replace(/[^0-9]/g, '')
-  const couponPrice = $('.prod-coupon-price > .total-price')
+  const couponPrice = +$('.prod-coupon-price > .total-price')
     .text()
     .replace(/[^0-9]/g, '')
   const reward = +$('.reward-cash-txt')
@@ -51,24 +63,16 @@ export default async function getCoupangProductInfo(browser: Browser, url: strin
       discount: $(e).find('.prod-coupon-price').text(),
       condition: $(e).find('.prod-coupon-desc').text(),
     }))
-  const creditCards = $('.ccid-benefit-badge__inr')
-    .toArray()
-    .map((e) => ({
-      discount: $(e).find('.benefit-label > b').text(),
-      companies: $(e)
-        .find('img')
-        .toArray()
-        .map((e) => $(e).attr('src'))
-        .map((imageUrl) => `https:${imageUrl}`),
-    }))
+  const cardDiscounts = getCardDiscounts(cardDiscountContent)
   const imageUrl = `https:${$('.prod-image__detail').attr('src')}`
   const reviewCount = $('#prod-review-nav-link > span.count').text()
   const isOutOfStock = Boolean($('.oos-label').text())
 
-  const prices = [originalPrice, salePrice, couponPrice]
-    .filter((price) => price)
-    .map((price) => +price)
-  const minimumPrice = Math.min(...prices) - reward
+  // const maxCardDiscount =
+  //   (couponPrice ?? salePrice ?? originalPrice ?? 0) *
+  //   (Math.max(...creditCards.map((card) => +card.discount.slice(0, -1))) / 100)
+  // const minimumPrice =
+  //   Math.min(originalPrice, salePrice, couponPrice) - Math.max(maxCardDiscount, reward)
 
   return {
     name,
@@ -78,10 +82,30 @@ export default async function getCoupangProductInfo(browser: Browser, url: strin
     couponPrice: couponPrice ? +couponPrice : null,
     reward,
     coupons,
-    minimumPrice,
-    creditCards,
+    minimumPrice: 0,
+    cardDiscounts,
     imageUrl,
     reviewCount,
     isOutOfStock,
   }
+}
+
+const findAbsoluteKoreanNumber = /최대 (.+)원 까지/
+const findRelativeNumber = /(\d+)%/
+
+function getCardDiscounts(cardDiscount?: string) {
+  if (!cardDiscount) return null
+
+  const $$ = load(cardDiscount)
+  return $$('#react-root > div > div:nth-child(2) > table > tbody > tr')
+    .toArray()
+    .map((e) => {
+      const cardDiscountSentence = $$(e).find('p').text()
+      return {
+        company: $$(e).find('.benefit-table__card-logo').attr('src'),
+        absolute: KoreanToNum(findAbsoluteKoreanNumber.exec(cardDiscountSentence)?.[1]),
+        relative: findRelativeNumber.exec(cardDiscountSentence)?.[1],
+        onlyWOW: $$(e).find('.wow-only-badge').length !== 0,
+      }
+    })
 }

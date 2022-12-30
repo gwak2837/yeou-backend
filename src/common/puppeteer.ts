@@ -17,7 +17,13 @@ class Puppeteer {
       PROJECT_ENV === 'cloud-prod' || PROJECT_ENV === 'local-docker'
         ? {
             executablePath: '/usr/bin/chromium-browser',
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+            args: [
+              '--no-sandbox',
+              '--disable-setuid-sandbox',
+              '--disable-dev-shm-usage',
+              '--disable-web-security',
+              '--disable-features=IsolateOrigins,site-per-process',
+            ],
           }
         : undefined
     )

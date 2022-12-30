@@ -35,6 +35,8 @@ export default async function routes(fastify: TFastify) {
     }),
   }
 
+  const browser = await puppeteer.browser
+
   fastify.get('/product', { schema }, async (req) => {
     const user = req.user
     if (!user) throw UnauthorizedError('로그인 후 시도해주세요')
@@ -68,7 +70,6 @@ export default async function routes(fastify: TFastify) {
 
     rawURL.searchParams.sort()
     const productURL = rawURL.toString()
-    const browser = await puppeteer.browser
 
     const [{ rows }, productFromWeb] = await Promise.all([
       pool.query<IGetOrCreateProductResult>(getOrCreateProduct, [productURL, user.id]),
@@ -95,7 +96,7 @@ export default async function routes(fastify: TFastify) {
       salePrice,
       couponPrice,
       coupons,
-      creditCards,
+      cardDiscounts,
       reward,
       imageUrl,
       reviewCount,
@@ -206,7 +207,7 @@ export default async function routes(fastify: TFastify) {
       reward,
       minimumPrice,
       coupons,
-      creditCards,
+      cardDiscounts,
       imageUrl,
       reviewCount,
       isOutOfStock,

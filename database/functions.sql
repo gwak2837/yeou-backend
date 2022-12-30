@@ -28,14 +28,29 @@ BEGIN
     product_id = _product_id
     AND user_id = _user_id;
   IF FOUND THEN
-    DELETE FROM product_x_user
-    WHERE product_id = _product_id
-      AND user_id = _user_id;
-    result = FALSE;
+    IF _condition IS NULL THEN
+      DELETE FROM product_x_user
+      WHERE product_id = _product_id
+        AND user_id = _user_id;
+      result = FALSE;
+    ELSE
+      UPDATE
+        product_x_user
+      SET
+        condition = _condition
+      WHERE
+        product_id = _product_id
+        AND user_id = _user_id;
+      result = TRUE;
+    END IF;
   ELSE
-    INSERT INTO product_x_user (product_id, user_id, condition)
-      VALUES (_product_id, _user_id, _condition);
-    result = TRUE;
+    IF _condition IS NULL THEN
+      result = FALSE;
+    ELSE
+      INSERT INTO product_x_user (product_id, user_id, condition)
+        VALUES (_product_id, _user_id, _condition);
+      result = TRUE;
+    END IF;
   END IF;
 END
 $$;

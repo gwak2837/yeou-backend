@@ -11,28 +11,31 @@ export default async function routes(fastify: TFastify) {
     params: Type.Object({
       id: Type.Number(),
     }),
-    body: Type.Object({
-      prices: Type.Array(
-        Type.Object({
-          limit: Type.Number(),
-          fluctuation: Type.Union([Type.Literal('more'), Type.Literal('less')]),
-          unit: Type.Number(),
-        })
-      ),
-      hasCardDiscount: Type.Boolean(),
-      hasCouponDiscount: Type.Boolean(),
-      canBuy: Type.Boolean(),
-    }),
+    body: Type.Union([
+      Type.Object({
+        prices: Type.Array(
+          Type.Object({
+            limit: Type.Number(),
+            fluctuation: Type.Union([Type.Literal('more'), Type.Literal('less')]),
+            unit: Type.Number(),
+          })
+        ),
+        hasCardDiscount: Type.Boolean(),
+        hasCouponDiscount: Type.Boolean(),
+        canBuy: Type.Boolean(),
+      }),
+      Type.Null(),
+    ]),
   }
 
-  fastify.post('/product/:id/subscribe', { schema }, async (req, reply) => {
+  fastify.post('/product/:id/subscribe', { schema }, async (req) => {
     const user = req.user
     if (!user) throw UnauthorizedError('로그인 후 시도해주세요')
 
     const { rows } = await pool.query<IToggleSubscriptionResult>(toggleSubscription, [
       req.params.id,
       user.id,
-      JSON.stringify(req.body),
+      req.body ? JSON.stringify(req.body) : null,
     ])
 
     return { isSubscribed: rows[0].result }

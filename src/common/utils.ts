@@ -30,3 +30,46 @@ export function encodeSex(sex: string) {
       return 0
   }
 }
+
+const numberHan = '영일이삼사오육칠팔구'
+const number = '0123456789'
+const units = { 십: 10, 백: 100, 천: 1000, 만: 10000, 억: 100000000, 조: 1000000000000 } as const
+
+export function KoreanToNum(koreanNum?: string) {
+  if (!koreanNum) return null
+
+  koreanNum = koreanNum.replace(/[^0-9가-힣]/gi, '')
+  const source = koreanNum.split('')
+  const sourceLength = source.length - 1
+
+  let result = 0
+  let tmp = 0
+  let num = 0
+  let check = 0
+
+  source.forEach((token, i) => {
+    check = numberHan.indexOf(token)
+
+    if (check < 0 && number.indexOf(token) > -1) {
+      check = number.indexOf(token)
+    }
+
+    if ('십백천'.indexOf(token) > -1) {
+      num += (tmp === 0 ? 1 : tmp) * units[token as '십' | '백' | '천']
+      tmp = 0
+    } else if ('만억조'.indexOf(token) > -1) {
+      num += tmp
+      result += (num === 0 ? 1 : num) * units[token as '만' | '억' | '조']
+      tmp = 0
+      num = 0
+    } else if (check > -1) {
+      tmp = tmp * 10 + check
+    }
+
+    if (i === sourceLength) {
+      result += num + tmp
+    }
+  })
+
+  return result
+}
