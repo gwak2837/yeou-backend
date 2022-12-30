@@ -4,7 +4,7 @@ import { exit } from 'process'
 
 import pgCopy from 'pg-copy-streams'
 
-import { CSV_PATH, pool } from './index.js'
+import { CSV_PATH, pool2 } from './index.js'
 
 const { to } = pgCopy
 
@@ -14,7 +14,7 @@ mkdirSync(`database/data/${CSV_PATH}`, { recursive: true })
 
 let fileCount = 0
 
-const client = await pool.connect()
+const client = await pool2.connect()
 
 const { rows } = await client.query('SELECT schema_name FROM information_schema.schemata')
 

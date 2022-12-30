@@ -5,11 +5,11 @@ import { createInterface } from 'readline'
 
 import pgCopy from 'pg-copy-streams'
 
-import { CSV_PATH, pool } from './index.js'
+import { CSV_PATH, pool2 } from './index.js'
 
 const { from } = pgCopy
 
-const client = await pool.connect()
+const client = await pool2.connect()
 
 try {
   console.log('BEGIN')

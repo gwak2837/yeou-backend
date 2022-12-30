@@ -35,7 +35,7 @@ if (PROJECT_ENV.startsWith('cloud') || PROJECT_ENV === 'local-docker') {
 
 console.log('👀 - process.env.PGURI', process.env.PGURI)
 
-export const pool = new Pool({
+export const pool2 = new Pool({
   connectionString: PGURI,
 
   ...((PROJECT_ENV === 'cloud-dev' ||

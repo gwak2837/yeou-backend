@@ -1,7 +1,7 @@
 import { Type } from '@sinclair/typebox'
 
-import { pool } from '../../../database'
 import { UnauthorizedError } from '../../common/fastify'
+import { pool } from '../../common/postgres'
 import { IToggleSubscriptionResult } from './sql/toggleSubscription'
 import toggleSubscription from './sql/toggleSubscription.sql'
 import { TFastify } from '..'
@@ -32,8 +32,7 @@ export default async function routes(fastify: TFastify) {
     const { rows } = await pool.query<IToggleSubscriptionResult>(toggleSubscription, [
       req.params.id,
       user.id,
-      req.body,
-      // JSON.stringify(req.body),
+      JSON.stringify(req.body),
     ])
 
     return { isSubscribed: rows[0].result }

@@ -21,6 +21,7 @@ import authRoute from './auth'
 import authFlareLaneRoute from './auth/flare-lane'
 import authKakaoRoute from './auth/kakao'
 import productRoute from './product'
+import productSubscribeRoute from './product/subscribe'
 import uploadRoute from './upload'
 import userRoute from './user'
 
@@ -138,12 +139,13 @@ fastify.addHook<QuerystringJWT>('onRequest', async (request, reply) => {
 //   staticCSP: true,
 // })
 
-fastify.register(productRoute)
-fastify.register(userRoute)
-fastify.register(uploadRoute)
 fastify.register(authRoute)
 fastify.register(authKakaoRoute)
 fastify.register(authFlareLaneRoute)
+fastify.register(productRoute)
+fastify.register(productSubscribeRoute)
+fastify.register(uploadRoute)
+fastify.register(userRoute)
 
 export default async function startServer() {
   try {
