@@ -1,6 +1,7 @@
 /* @name getProductSubscriptions */
 SELECT
   product_x_user.condition,
+  "user".id,
   "user".email,
   "user".flare_lane_device_id,
   "user".phone_number,

@@ -9,6 +9,7 @@ export interface IGetProductSubscriptionsResult {
   condition: string | null;
   email: string | null;
   flare_lane_device_id: string | null;
+  id: string;
   phone_number: string | null;
   should_notify_by_email: boolean;
   should_notify_by_kakaotalk: boolean;
@@ -25,13 +26,14 @@ export interface IGetProductSubscriptionsQuery {
   result: IGetProductSubscriptionsResult;
 }
 
-const getProductSubscriptionsIR: any = {"usedParamSet":{},"params":[],"statement":"SELECT\n  product_x_user.condition,\n  \"user\".email,\n  \"user\".flare_lane_device_id,\n  \"user\".phone_number,\n  \"user\".should_notify_by_email,\n  \"user\".should_notify_by_kakaotalk,\n  \"user\".should_notify_by_line,\n  \"user\".should_notify_by_phone,\n  \"user\".should_notify_by_telegram,\n  \"user\".should_notify_by_web_push,\n  \"user\".telegram_user_id\nFROM\n  \"user\"\n  JOIN product_x_user ON product_x_user.user_id = \"user\".id\n    AND product_x_user.product_id = $1\n    AND product_x_user.last_check_time < $2"};
+const getProductSubscriptionsIR: any = {"usedParamSet":{},"params":[],"statement":"SELECT\n  product_x_user.condition,\n  \"user\".id,\n  \"user\".email,\n  \"user\".flare_lane_device_id,\n  \"user\".phone_number,\n  \"user\".should_notify_by_email,\n  \"user\".should_notify_by_kakaotalk,\n  \"user\".should_notify_by_line,\n  \"user\".should_notify_by_phone,\n  \"user\".should_notify_by_telegram,\n  \"user\".should_notify_by_web_push,\n  \"user\".telegram_user_id\nFROM\n  \"user\"\n  JOIN product_x_user ON product_x_user.user_id = \"user\".id\n    AND product_x_user.product_id = $1\n    AND product_x_user.last_check_time < $2"};
 
 /**
  * Query generated from SQL:
  * ```
  * SELECT
  *   product_x_user.condition,
+ *   "user".id,
  *   "user".email,
  *   "user".flare_lane_device_id,
  *   "user".phone_number,

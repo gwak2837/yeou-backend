@@ -9,7 +9,7 @@ declare module '@fastify/jwt' {
       name?: string
       iat: number
       exp: number
-    }
+    } | null
   }
 
   interface DecodePayloadType {

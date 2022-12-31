@@ -2,7 +2,7 @@ import { Type } from '@sinclair/typebox'
 import fetch from 'node-fetch'
 
 import { FLARE_LANE_API_KEY, FLARE_LANE_PROJECT_ID } from '../../common/constants'
-import { BadRequestError, NotImplementedError, UnauthorizedError } from '../../common/fastify'
+import { BadRequestError, NotImplementedError } from '../../common/fastify'
 import { pool } from '../../common/postgres'
 import puppeteer from '../../common/puppeteer'
 import { telegramBot } from '../../common/telegram'
@@ -71,7 +71,7 @@ export default async function routes(fastify: TFastify) {
     const productURL = rawURL.toString()
 
     const [{ rows }, productFromWeb] = await Promise.all([
-      pool.query<IGetOrCreateProductResult>(getOrCreateProduct, [productURL, user.id]),
+      pool.query<IGetOrCreateProductResult>(getOrCreateProduct, [productURL, user?.id]),
       (async () => {
         switch (hostname) {
           case 'www.coupang.com':
@@ -191,7 +191,7 @@ export default async function routes(fastify: TFastify) {
             content,
             thirdPartyId,
             productURL,
-            user.id,
+            row.id,
           ])
         }
 
