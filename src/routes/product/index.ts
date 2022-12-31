@@ -39,7 +39,6 @@ export default async function routes(fastify: TFastify) {
 
   fastify.get('/product', { schema }, async (req) => {
     const user = req.user
-    if (!user) throw UnauthorizedError('로그인 후 시도해주세요')
 
     let rawURL: URL
     try {
@@ -95,13 +94,16 @@ export default async function routes(fastify: TFastify) {
       originalPrice,
       salePrice,
       couponPrice,
+      cards,
+      maximumCardDiscount,
       coupons,
-      cardDiscounts,
       reward,
+      maximumDiscount,
+      minimumPrice,
       imageUrl,
+      reviewURL,
       reviewCount,
       isOutOfStock,
-      minimumPrice,
     } = productFromWeb
 
     // TODO: 아래 연속되는 pool.query 하나로 합치키
@@ -204,11 +206,14 @@ export default async function routes(fastify: TFastify) {
       originalPrice,
       salePrice,
       couponPrice,
-      reward,
-      minimumPrice,
+      cards,
+      maximumCardDiscount,
       coupons,
-      cardDiscounts,
+      reward,
+      maximumDiscount,
+      minimumPrice,
       imageUrl,
+      reviewURL,
       reviewCount,
       isOutOfStock,
       notificationCondition: productFromDB.condition ? JSON.parse(productFromDB.condition) : null,

@@ -73,3 +73,7 @@ export function KoreanToNum(koreanNum?: string) {
 
   return result
 }
+
+export function stringToNum(stringNum?: string | null) {
+  return stringNum !== null && stringNum !== undefined && stringNum !== '' ? +stringNum : null
+}

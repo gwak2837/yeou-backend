@@ -2,7 +2,7 @@ import { load } from 'cheerio'
 import { Browser, Page } from 'puppeteer'
 
 import { BadRequestError } from '../../common/fastify'
-import { KoreanToNum } from '../../common/utils'
+import { KoreanToNum, stringToNum } from '../../common/utils'
 
 export default async function getCoupangProductInfo(browser: Browser, url: string) {
   const page = await browser.newPage()
@@ -32,6 +32,7 @@ export default async function getCoupangProductInfo(browser: Browser, url: strin
     await cardDiscountFrame?.waitForSelector('#react-root > div > div:nth-child(2) > table > tbody')
   }
 
+  // HTTP server push로 응답 미리 보내주기
   const content = await page.content()
   const cardDiscountContent = await cardDiscountFrame?.content()
   page.close()
@@ -45,46 +46,71 @@ export default async function getCoupangProductInfo(browser: Browser, url: strin
       title: $(e).find('.title').text(),
       value: $(e).find('.value').text().trim(),
     }))
-  const originalPrice = +$('.origin-price')
-    .text()
-    .replace(/[^0-9]/g, '')
-  const salePrice = +$('.prod-sale-price > .total-price')
-    .text()
-    .replace(/[^0-9]/g, '')
-  const couponPrice = +$('.prod-coupon-price > .total-price')
-    .text()
-    .replace(/[^0-9]/g, '')
-  const reward = +$('.reward-cash-txt')
-    .text()
-    .replace(/[^0-9]/g, '')
+  const originalPrice = stringToNum(
+    $('.origin-price')
+      .text()
+      .replace(/[^0-9]/g, '')
+  )
+  const salePrice = stringToNum(
+    $('.prod-sale-price > .total-price')
+      .text()
+      .replace(/[^0-9]/g, '')
+  )
+  const couponPrice = stringToNum(
+    $('.prod-coupon-price > .total-price')
+      .text()
+      .replace(/[^0-9]/g, '')
+  )
+  const reward = stringToNum(
+    $('.reward-cash-txt')
+      .text()
+      .replace(/[^0-9]/g, '')
+  )
   const coupons = $('.prod-coupon-download-item__on')
     .toArray()
     .map((e) => ({
       discount: $(e).find('.prod-coupon-price').text(),
       condition: $(e).find('.prod-coupon-desc').text(),
     }))
-  const cardDiscounts = getCardDiscounts(cardDiscountContent)
+  const cards = getCardDiscounts(cardDiscountContent)
   const imageUrl = `https:${$('.prod-image__detail').attr('src')}`
   const reviewCount = $('#prod-review-nav-link > span.count').text()
   const isOutOfStock = Boolean($('.oos-label').text())
 
-  // const maxCardDiscount =
-  //   (couponPrice ?? salePrice ?? originalPrice ?? 0) *
-  //   (Math.max(...creditCards.map((card) => +card.discount.slice(0, -1))) / 100)
-  // const minimumPrice =
-  //   Math.min(originalPrice, salePrice, couponPrice) - Math.max(maxCardDiscount, reward)
+  const prices = []
+  if (originalPrice) prices.push(originalPrice)
+  if (salePrice) prices.push(salePrice)
+  if (couponPrice) prices.push(couponPrice)
+  const minimumPriceBeforeDiscount = Math.min(...prices)
+
+  const rewards = [0]
+  if (reward) rewards.push(reward)
+
+  const cardDiscounts = [0]
+  for (const card of cards) {
+    const cardDiscount = []
+    if (card.absolute) cardDiscount.push(card.absolute)
+    if (card.relative) cardDiscount.push((card.relative * minimumPriceBeforeDiscount) / 100)
+    if (cardDiscount.length !== 0) cardDiscounts.push(Math.min(...cardDiscount))
+  }
+
+  const maximumCardDiscount = Math.max(...cardDiscounts)
+  const maximumDiscount = Math.max(...rewards, maximumCardDiscount)
 
   return {
     name,
     options,
-    originalPrice: originalPrice ? +originalPrice : null,
-    salePrice: salePrice ? +salePrice : null,
-    couponPrice: couponPrice ? +couponPrice : null,
+    originalPrice,
+    salePrice,
+    couponPrice,
+    cards: cards.length === 0 ? null : cards,
+    maximumCardDiscount: maximumCardDiscount || null,
+    coupons: coupons.length === 0 ? null : coupons,
     reward,
-    coupons,
-    minimumPrice: 0,
-    cardDiscounts,
+    maximumDiscount: maximumDiscount || null,
+    minimumPrice: minimumPriceBeforeDiscount - maximumDiscount,
     imageUrl,
+    reviewURL: `${url}#sdpReview`,
     reviewCount,
     isOutOfStock,
   }
@@ -94,7 +120,7 @@ const findAbsoluteKoreanNumber = /최대 (.+)원 까지/
 const findRelativeNumber = /(\d+)%/
 
 function getCardDiscounts(cardDiscount?: string) {
-  if (!cardDiscount) return null
+  if (!cardDiscount) return []
 
   const $$ = load(cardDiscount)
   return $$('#react-root > div > div:nth-child(2) > table > tbody > tr')
@@ -104,7 +130,7 @@ function getCardDiscounts(cardDiscount?: string) {
       return {
         company: $$(e).find('.benefit-table__card-logo').attr('src'),
         absolute: KoreanToNum(findAbsoluteKoreanNumber.exec(cardDiscountSentence)?.[1]),
-        relative: findRelativeNumber.exec(cardDiscountSentence)?.[1],
+        relative: stringToNum(findRelativeNumber.exec(cardDiscountSentence)?.[1]),
         onlyWOW: $$(e).find('.wow-only-badge').length !== 0,
       }
     })
