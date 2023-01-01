@@ -100,7 +100,7 @@ export default async function routes(fastify: TFastify) {
       reward,
       maximumDiscount,
       minimumPrice,
-      imageUrl,
+      imageURL,
       reviewURL,
       reviewCount,
       isOutOfStock,
@@ -108,7 +108,7 @@ export default async function routes(fastify: TFastify) {
 
     // TODO: 아래 연속되는 pool.query 하나로 합치키
     if (productFromDB.is_new) {
-      pool.query(updateProduct, [name, options, imageUrl, productId])
+      pool.query(updateProduct, [name, options, imageURL, productId])
     }
 
     pool.query(saveProductHistory, [isOutOfStock, minimumPrice, productId])
@@ -154,7 +154,7 @@ export default async function routes(fastify: TFastify) {
                 title,
                 body: content,
                 url: productURL,
-                imageUrl,
+                imageURL,
                 // data: {},
               }),
             })
@@ -203,6 +203,7 @@ export default async function routes(fastify: TFastify) {
       id: productId,
       name,
       options,
+      URL: productURL,
       originalPrice,
       salePrice,
       couponPrice,
@@ -212,7 +213,7 @@ export default async function routes(fastify: TFastify) {
       reward,
       maximumDiscount,
       minimumPrice,
-      imageUrl,
+      imageURL,
       reviewURL,
       reviewCount,
       isOutOfStock,

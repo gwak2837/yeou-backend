@@ -73,7 +73,7 @@ export default async function getCoupangProductInfo(browser: Browser, url: strin
       condition: $(e).find('.prod-coupon-desc').text(),
     }))
   const cards = getCardDiscounts(cardDiscountContent)
-  const imageUrl = `https:${$('.prod-image__detail').attr('src')}`
+  const imageURL = `https:${$('.prod-image__detail').attr('src')}`
   const reviewCount = $('#prod-review-nav-link > span.count').text()
   const isOutOfStock = Boolean($('.oos-label').text())
 
@@ -109,7 +109,7 @@ export default async function getCoupangProductInfo(browser: Browser, url: strin
     reward,
     maximumDiscount: maximumDiscount || null,
     minimumPrice: minimumPriceBeforeDiscount - maximumDiscount,
-    imageUrl,
+    imageURL,
     reviewURL: `${url}#sdpReview`,
     reviewCount,
     isOutOfStock,
