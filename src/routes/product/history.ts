@@ -1,6 +1,5 @@
 import { Type } from '@sinclair/typebox'
 
-import { UnauthorizedError } from '../../common/fastify'
 import { pool } from '../../common/postgres'
 import { IGetProductHistoryResult } from './sql/getProductHistory'
 import getProductHistory from './sql/getProductHistory.sql'
