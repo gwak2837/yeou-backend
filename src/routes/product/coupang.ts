@@ -1,5 +1,5 @@
 import { load } from 'cheerio'
-import { Browser, Page } from 'puppeteer'
+import { Browser } from 'puppeteer'
 
 import { BadRequestError } from '../../common/fastify'
 import { KoreanToNum, stringToNum } from '../../common/utils'

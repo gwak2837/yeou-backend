@@ -86,7 +86,7 @@ export default async function routes(fastify: TFastify) {
     ])
 
     const productFromDB = rows[0]
-    const productId = productFromDB.product_id
+    const { condition, is_new: isNewProduct, product_id: productId } = productFromDB
 
     const {
       name,
@@ -107,7 +107,7 @@ export default async function routes(fastify: TFastify) {
     } = productFromWeb
 
     // TODO: 아래 연속되는 pool.query 하나로 합치키
-    if (productFromDB.is_new) {
+    if (isNewProduct) {
       pool.query(updateProduct, [name, options, imageURL, productId])
     }
 
@@ -217,7 +217,7 @@ export default async function routes(fastify: TFastify) {
       reviewURL,
       reviewCount,
       isOutOfStock,
-      notificationCondition: productFromDB.condition ? JSON.parse(productFromDB.condition) : null,
+      notificationCondition: condition ? JSON.parse(condition) : null,
     }
   })
 }

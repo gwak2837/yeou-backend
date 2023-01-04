@@ -68,7 +68,8 @@ BEGIN
     product
   LEFT JOIN product_x_user ON product_x_user.product_id = product.id
     AND product_x_user.user_id = _user_id
-    AND product.url = _product_url;
+WHERE
+  product.url = _product_url;
   IF found THEN
     is_new = FALSE;
   ELSE
