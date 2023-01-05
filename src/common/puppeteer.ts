@@ -16,16 +16,22 @@ class Puppeteer {
     this.browser = puppeteerExtra.launch(
       PROJECT_ENV === 'cloud-prod' || PROJECT_ENV === 'local-docker'
         ? {
-            executablePath: '/usr/bin/chromium-browser',
             args: [
-              '--no-sandbox',
-              '--disable-setuid-sandbox',
+              '--disable-accelerated-2d-canvas',
               '--disable-dev-shm-usage',
-              '--disable-web-security',
               '--disable-features=IsolateOrigins,site-per-process',
+              '--disable-gpu',
+              '--disable-setuid-sandbox',
+              '--disable-web-security',
+              '--no-first-run',
+              '--no-sandbox',
             ],
+            executablePath: '/usr/bin/chromium-browser',
+            timeout: 10_000,
           }
-        : undefined
+        : {
+            timeout: 10_000,
+          }
     )
   }
 }

@@ -51,20 +51,22 @@ export default async function routes(fastify: TFastify) {
 
     // TODO: 수익 링크로 전환하기
 
-    switch (hostname) {
-      case 'www.coupang.com':
-      case 'link.coupang.com':
-        for (const paramKey of rawURL.searchParams.keys()) {
-          if (paramKey !== 'vendorItemId' && paramKey !== 'itemId') {
-            rawURL.searchParams.delete(paramKey)
-          }
-        }
-        break
-      case 'ohou.se':
-      case 'prod.danawa.com':
-        throw NotImplementedError('지원 예정입니다')
-      default:
-        throw BadRequestError('지원하지 않는 URL 주소입니다')
+    if (hostname === 'www.coupang.com') {
+      const searchParams = new URLSearchParams(rawURL.search)
+      const newSearchParams: any = {}
+      const venderItemId = searchParams.get('vendorItemId')
+      const itemId = searchParams.get('itemId')
+      if (venderItemId) newSearchParams.vendorItemId = venderItemId
+      if (itemId) newSearchParams.itemId = itemId
+      rawURL.search = new URLSearchParams(newSearchParams).toString()
+    } else if (hostname === 'link.coupang.com') {
+      rawURL.search = ''
+    } else if (hostname === 'ohou.se') {
+      throw NotImplementedError('지원 예정입니다')
+    } else if (hostname === 'prod.danawa.com') {
+      throw NotImplementedError('지원 예정입니다')
+    } else {
+      throw BadRequestError('지원하지 않는 URL 주소입니다')
     }
 
     rawURL.searchParams.sort()
