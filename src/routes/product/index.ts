@@ -206,6 +206,7 @@ export default async function routes(fastify: TFastify) {
       name,
       options,
       URL: productURL,
+      affiliateLink: productURL,
       originalPrice,
       salePrice,
       couponPrice,

@@ -25,6 +25,8 @@ class Puppeteer {
               '--disable-web-security',
               '--no-first-run',
               '--no-sandbox',
+              '--no-zygote',
+              '--single-process',
             ],
             executablePath: '/usr/bin/chromium-browser',
             timeout: 10_000,
