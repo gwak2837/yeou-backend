@@ -8,11 +8,11 @@ import puppeteer from '../../common/puppeteer'
 import { telegramBot } from '../../common/telegram'
 import getCoupangProductInfo from './coupang'
 import createNotification from './sql/createNotification.sql'
+import createProductHistory from './sql/createProductHistory.sql'
 import { IGetOrCreateProductResult } from './sql/getOrCreateProduct'
 import getOrCreateProduct from './sql/getOrCreateProduct.sql'
 import { IGetProductSubscriptionsResult } from './sql/getProductSubscriptions'
 import getProductSubscriptions from './sql/getProductSubscriptions.sql'
-import saveProductHistory from './sql/saveProductHistory.sql'
 import updateProduct from './sql/updateProduct.sql'
 import updateSubscription from './sql/updateSubscription.sql'
 import { TFastify } from '..'
@@ -113,7 +113,8 @@ export default async function routes(fastify: TFastify) {
       pool.query(updateProduct, [name, options, imageURL, productId])
     }
 
-    pool.query(saveProductHistory, [isOutOfStock, minimumPrice, productId])
+    const now = new Date()
+    pool.query(createProductHistory, [now, isOutOfStock, minimumPrice, productId])
 
     const oneHourBefore = new Date()
     oneHourBefore.setHours(oneHourBefore.getHours() - 1)
@@ -125,8 +126,10 @@ export default async function routes(fastify: TFastify) {
       ])
       .then(async ({ rows }) => {
         for (const row of rows) {
-          const condition = row.condition ? (JSON.parse(row.condition) as Condition) : null
-          if (!condition) continue
+          const conditionString = row.condition
+          if (!conditionString) continue
+
+          const condition = JSON.parse(conditionString) as Condition
           if (!evaluate(condition, productFromWeb)) continue
 
           // TODO: 여러 condition 처리
@@ -203,6 +206,7 @@ export default async function routes(fastify: TFastify) {
 
     return {
       id: productId,
+      updateTime: now,
       name,
       options,
       URL: productURL,
