@@ -126,10 +126,10 @@ export default async function routes(fastify: TFastify) {
       ])
       .then(async ({ rows }) => {
         for (const row of rows) {
-          const conditionString = row.condition
-          if (!conditionString) continue
+          const pricesString = row.prices
+          if (!pricesString) continue
 
-          const condition = JSON.parse(conditionString) as Condition
+          const condition = JSON.parse(pricesString) as Condition
           if (!evaluate(condition, productFromWeb)) continue
 
           // TODO: 여러 condition 처리

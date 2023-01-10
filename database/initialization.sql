@@ -42,6 +42,8 @@ CREATE TABLE product_history (
   id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
   creation_time timestamptz DEFAULT CURRENT_TIMESTAMP,
   is_out_of_stock boolean NOT NULL DEFAULT FALSE,
+  has_card_discount boolean NOT NULL DEFAULT FALSE,
+  has_coupon_discount boolean NOT NULL DEFAULT FALSE,
   price int,
   --
   product_id bigint NOT NULL REFERENCES product ON DELETE CASCADE
@@ -62,6 +64,7 @@ CREATE TABLE notification (
   link_url text NOT NULL,
   third_party_id text,
   --
+  product_id bigint NOT NULL REFERENCES product ON DELETE CASCADE,
   receiver_id bigint NOT NULL REFERENCES "user" ON DELETE CASCADE
 );
 
@@ -105,7 +108,10 @@ CREATE TABLE post_x_user (
 CREATE TABLE product_x_user (
   product_id bigint REFERENCES product ON DELETE CASCADE,
   user_id bigint REFERENCES "user" ON DELETE CASCADE,
-  condition text,
+  prices text,
+  has_card_discount boolean NOT NULL DEFAULT FALSE,
+  has_coupon_discount boolean NOT NULL DEFAULT FALSE,
+  can_buy boolean NOT NULL DEFAULT FALSE,
   last_check_time timestamptz,
   --
   PRIMARY KEY (product_id, user_id)
