@@ -15,7 +15,7 @@ export interface IToggleSubscriptionQuery {
   result: IToggleSubscriptionResult;
 }
 
-const toggleSubscriptionIR: any = {"usedParamSet":{},"params":[],"statement":"SELECT\n  result\nFROM\n  toggle_subscription ($1, $2, $3)"};
+const toggleSubscriptionIR: any = {"usedParamSet":{},"params":[],"statement":"SELECT\n  result\nFROM\n  toggle_subscription ($1, $2, $3, $4, $5, $6)"};
 
 /**
  * Query generated from SQL:
@@ -23,7 +23,7 @@ const toggleSubscriptionIR: any = {"usedParamSet":{},"params":[],"statement":"SE
  * SELECT
  *   result
  * FROM
- *   toggle_subscription ($1, $2, $3)
+ *   toggle_subscription ($1, $2, $3, $4, $5, $6)
  * ```
  */
 export const toggleSubscription = new PreparedQuery<IToggleSubscriptionParams,IToggleSubscriptionResult>(toggleSubscriptionIR);

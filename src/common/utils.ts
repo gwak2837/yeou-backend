@@ -77,3 +77,5 @@ export function KoreanToNum(koreanNum?: string) {
 export function stringToNum(stringNum?: string | null) {
   return stringNum !== null && stringNum !== undefined && stringNum !== '' ? +stringNum : null
 }
+
+export const formatKRPrice = new Intl.NumberFormat('ko-KR').format

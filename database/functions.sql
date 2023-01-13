@@ -17,7 +17,8 @@ BEGIN
 END
 $$;
 
-CREATE FUNCTION toggle_subscription (_product_id bigint, _user_id bigint, _condition text, out result boolean)
+CREATE FUNCTION toggle_subscription (_product_id bigint, _user_id bigint, _prices text,
+  _has_card_discount boolean, _has_coupon_discount boolean, _can_buy boolean, out result boolean)
 LANGUAGE plpgsql
 AS $$
 BEGIN
@@ -28,7 +29,7 @@ BEGIN
     product_id = _product_id
     AND user_id = _user_id;
   IF FOUND THEN
-    IF _condition IS NULL THEN
+    IF _prices IS NULL AND _has_card_discount IS NULL AND _has_coupon_discount IS NULL AND _can_buy IS NULL THEN
       DELETE FROM product_x_user
       WHERE product_id = _product_id
         AND user_id = _user_id;
@@ -37,18 +38,21 @@ BEGIN
       UPDATE
         product_x_user
       SET
-        condition = _condition
+        prices = _prices,
+        has_card_discount = _has_card_discount,
+        has_coupon_discount = _has_coupon_discount,
+        can_buy = _can_buy
       WHERE
         product_id = _product_id
         AND user_id = _user_id;
       result = TRUE;
     END IF;
   ELSE
-    IF _condition IS NULL THEN
+    IF _prices IS NULL AND _has_card_discount IS NULL AND _has_coupon_discount IS NULL AND _can_buy IS NULL THEN
       result = FALSE;
     ELSE
-      INSERT INTO product_x_user (product_id, user_id, condition)
-        VALUES (_product_id, _user_id, _condition);
+      INSERT INTO product_x_user (product_id, user_id, prices, has_card_discount, has_coupon_discount, can_buy)
+        VALUES (_product_id, _user_id, _prices, _has_card_discount, _has_coupon_discount, _can_buy);
       result = TRUE;
     END IF;
   END IF;
@@ -56,14 +60,21 @@ END
 $$;
 
 CREATE FUNCTION get_or_create_product (_product_url text, _user_id bigint, out product_id bigint,
-  out is_new boolean, out condition text)
+  out is_new boolean, out prices text, out has_card_discount boolean, out has_coupon_discount
+  boolean, out can_buy boolean)
 LANGUAGE plpgsql
 AS $$
 BEGIN
   SELECT
     id,
-    product_x_user.condition INTO product_id,
-    condition
+    product_x_user.prices,
+    product_x_user.has_card_discount,
+    product_x_user.has_coupon_discount,
+    product_x_user.can_buy INTO product_id,
+    prices,
+    has_card_discount,
+    has_coupon_discount,
+    can_buy
   FROM
     product
   LEFT JOIN product_x_user ON product_x_user.product_id = product.id

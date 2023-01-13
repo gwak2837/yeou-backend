@@ -6,6 +6,7 @@ import { BadRequestError, NotImplementedError } from '../../common/fastify'
 import { pool } from '../../common/postgres'
 import puppeteer from '../../common/puppeteer'
 import { telegramBot } from '../../common/telegram'
+import { formatKRPrice } from '../../common/utils'
 import getCoupangProductInfo from './coupang'
 import createNotification from './sql/createNotification.sql'
 import createProductHistory from './sql/createProductHistory.sql'
@@ -17,15 +18,10 @@ import updateProduct from './sql/updateProduct.sql'
 import updateSubscription from './sql/updateSubscription.sql'
 import { TFastify } from '..'
 
-type Condition = {
-  prices: {
-    limit: number
-    fluctuation: 'more' | 'less'
-    unit: number
-  }[]
-  hasCardDiscount: boolean
-  hasCouponDiscount: boolean
-  canBuy: boolean
+type Price = {
+  limit: number
+  fluctuation: '상승' | '하락'
+  unit: number
 }
 
 export default async function routes(fastify: TFastify) {
@@ -88,7 +84,14 @@ export default async function routes(fastify: TFastify) {
     ])
 
     const productFromDB = rows[0]
-    const { condition, is_new: isNewProduct, product_id: productId } = productFromDB
+    const {
+      prices,
+      has_card_discount: hasCardDiscount,
+      has_coupon_discount: hasCouponDiscount,
+      can_buy: canBuy,
+      is_new: isNewProduct,
+      product_id: productId,
+    } = productFromDB
 
     const {
       name,
@@ -114,7 +117,7 @@ export default async function routes(fastify: TFastify) {
     }
 
     const now = new Date()
-    pool.query(createProductHistory, [now, isOutOfStock, minimumPrice, productId])
+    pool.query(createProductHistory, [now, isOutOfStock, minimumPrice, productId]) // has_card_discount has_coupon_discount 반영하기
 
     const oneHourBefore = new Date()
     oneHourBefore.setHours(oneHourBefore.getHours() - 1)
@@ -126,21 +129,52 @@ export default async function routes(fastify: TFastify) {
       ])
       .then(async ({ rows }) => {
         for (const row of rows) {
-          const pricesString = row.prices
-          if (!pricesString) continue
+          const prices = row.prices ? (JSON.parse(row.prices) as Price[]) : null
+          const titles = new Set()
+          const contents = []
 
-          const condition = JSON.parse(pricesString) as Condition
-          if (!evaluate(condition, productFromWeb)) continue
+          if (prices) {
+            for (const price of prices) {
+              const isSatisfiedPriceCondition =
+                (price.fluctuation === '상승' &&
+                  row.product_history__price &&
+                  row.product_history__price < price.limit &&
+                  minimumPrice > price.limit) ||
+                (price.fluctuation === '하락' &&
+                  row.product_history__price &&
+                  row.product_history__price > price.limit &&
+                  minimumPrice < price.limit)
 
-          // TODO: 여러 condition 처리
-          const firstCondition = condition.prices[0]
-          const fluctuation = firstCondition.fluctuation === 'more' ? '상승' : '하락'
+              if (isSatisfiedPriceCondition) {
+                titles.add('가격 변동')
+                contents.push(
+                  `상품 가격이 ${formatKRPrice(price.limit)}원 보다 ${price.fluctuation}했습니다.`
+                )
+              }
+            }
+          }
+
+          if (row.can_buy && row.is_out_of_stock && !isOutOfStock) {
+            titles.add('재입고')
+            contents.push('상품이 재입고됐습니다.')
+          }
+
+          if (row.condition__card_discount && !row.has_card_discount && cards) {
+            titles.add('카드 할인')
+            contents.push('상품에 카드 할인이 생겼습니다.')
+          }
+
+          if (row.condition__coupon_discount && !row.has_coupon_discount && coupons) {
+            titles.add('쿠폰 할인')
+            contents.push('상품에 쿠폰 할인이 생겼습니다.')
+          }
+
           const option = options.map((option) => option.value).join(', ')
+          const title = `${name} ${option} ${Array.from(titles).join(', ')}`
+          const content = `${contents.join('\n\n')}`
 
-          const title = `${name} ${firstCondition.limit}원 도달`
-          const content = `${name} ${option} ${minimumPrice}원으로 ${fluctuation}`
           const channels = []
-          let thirdPartyId
+          let thirdPartyMessageId
 
           // Web push notification
           const flareLaneDeviceId = row.flare_lane_device_id
@@ -167,7 +201,7 @@ export default async function routes(fastify: TFastify) {
             const result = (await response.json()) as Record<string, any>
 
             if (result.data) {
-              thirdPartyId = result.data.id
+              thirdPartyMessageId = result.data.id
               channels.push(0)
             } else {
               console.error(result)
@@ -181,7 +215,7 @@ export default async function routes(fastify: TFastify) {
             const a = await telegramBot.sendMessage(telegramUserId, `${title}\n\n${content}\n\n`)
 
             if (a.message_id) {
-              thirdPartyId = a.message_id
+              thirdPartyMessageId = a.message_id
             } else {
               console.error(a)
             }
@@ -189,12 +223,16 @@ export default async function routes(fastify: TFastify) {
 
           // Slack notification
 
+          // Discord notification
+
+          // Twitter notification
+
           // TODO: 아래 update처럼, 모든 insert 한번에 하기
           pool.query(createNotification, [
             title,
             channels,
             content,
-            thirdPartyId,
+            thirdPartyMessageId,
             productURL,
             row.id,
           ])
@@ -224,17 +262,12 @@ export default async function routes(fastify: TFastify) {
       reviewURL,
       reviewCount,
       isOutOfStock,
-      notificationCondition: condition ? JSON.parse(condition) : null,
+      notificationCondition: {
+        prices: prices ? JSON.parse(prices) : null,
+        hasCardDiscount,
+        hasCouponDiscount,
+        canBuy,
+      },
     }
   })
-}
-
-function evaluate(condition: Condition, productFromWeb: Record<string, any>) {
-  const firstCondition = condition.prices[0]
-
-  if (firstCondition.fluctuation === 'more') {
-    return firstCondition.limit < productFromWeb.minimumPrice - firstCondition.unit
-  } else {
-    return firstCondition.limit > productFromWeb.minimumPrice + firstCondition.unit
-  }
 }

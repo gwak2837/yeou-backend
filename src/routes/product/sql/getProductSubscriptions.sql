@@ -1,8 +1,8 @@
 /* @name getProductSubscriptions */
 SELECT
   product_x_user.prices,
-  product_x_user.has_card_discount,
-  product_x_user.has_coupon_discount,
+  product_x_user.has_card_discount AS condition__card_discount,
+  product_x_user.has_coupon_discount AS condition__coupon_discount,
   product_x_user.can_buy,
   "user".id,
   "user".email,
@@ -14,7 +14,12 @@ SELECT
   "user".should_notify_by_phone,
   "user".should_notify_by_telegram,
   "user".should_notify_by_web_push,
-  "user".telegram_user_id
+  "user".telegram_user_id,
+  notification.price AS notification__price,
+  product_history.is_out_of_stock,
+  product_history.has_card_discount,
+  product_history.has_coupon_discount,
+  product_history.price AS product_history__price
 FROM
   product_x_user
   JOIN "user" ON "user".id = product_x_user.user_id
@@ -38,6 +43,9 @@ FROM
     AND (product_x_user.has_card_discount = TRUE
       OR product_x_user.has_coupon_discount = TRUE
       OR product_x_user.can_buy = TRUE)
+    AND (product_history.creation_time < h2.creation_time
+      OR (product_history.creation_time = h2.creation_time
+        AND product_history.id < h2.id))
 WHERE
   n2.id IS NULL
   AND h2.id IS NULL;

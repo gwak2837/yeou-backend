@@ -39,27 +39,6 @@ const fastify = Fastify({
 
 export type TFastify = typeof fastify
 
-const schema = {
-  schema: {
-    querystring: Type.Object({
-      foo: Type.Optional(Type.Number()),
-      bar: Type.Optional(Type.String()),
-    }),
-    response: {
-      200: Type.Object({
-        hello: Type.String(),
-        foo: Type.Optional(Type.Number()),
-        bar: Type.Optional(Type.String()),
-      }),
-    },
-  },
-}
-
-fastify.get('/', schema, async (request, _) => {
-  const { foo, bar } = request.query
-  return { hello: 'world', foo, bar }
-})
-
 fastify.register(cors, {
   origin: [
     'http://localhost:3000',
@@ -139,13 +118,35 @@ fastify.addHook<QuerystringJWT>('onRequest', async (request, reply) => {
 //   staticCSP: true,
 // })
 
-fastify.register(authRoute)
-fastify.register(authKakaoRoute)
-fastify.register(authFlareLaneRoute)
-fastify.register(productRoute)
-fastify.register(productSubscribeRoute)
-fastify.register(uploadRoute)
-fastify.register(userRoute)
+const schema = {
+  schema: {
+    querystring: Type.Object({
+      foo: Type.Optional(Type.Number()),
+      bar: Type.Optional(Type.String()),
+    }),
+    response: {
+      200: Type.Object({
+        hello: Type.String(),
+        foo: Type.Optional(Type.Number()),
+        bar: Type.Optional(Type.String()),
+      }),
+    },
+  },
+}
+
+fastify.get('/', schema, async (request, _) => {
+  const { foo, bar } = request.query
+  return { hello: 'world', foo, bar }
+})
+
+fastify
+  .register(authRoute)
+  .register(authKakaoRoute)
+  .register(authFlareLaneRoute)
+  .register(productRoute)
+  .register(productSubscribeRoute)
+  .register(uploadRoute)
+  .register(userRoute)
 
 export default async function startServer() {
   try {

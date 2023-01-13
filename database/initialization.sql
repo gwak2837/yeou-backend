@@ -62,7 +62,8 @@ CREATE TABLE notification (
   channels int[] NOT NULL,
   is_read boolean NOT NULL DEFAULT FALSE,
   link_url text NOT NULL,
-  third_party_id text,
+  price int NOT NULL,
+  third_party_message_id text,
   --
   product_id bigint NOT NULL REFERENCES product ON DELETE CASCADE,
   receiver_id bigint NOT NULL REFERENCES "user" ON DELETE CASCADE
