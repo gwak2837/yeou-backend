@@ -109,6 +109,7 @@ CREATE TABLE post_x_user (
 CREATE TABLE product_x_user (
   product_id bigint REFERENCES product ON DELETE CASCADE,
   user_id bigint REFERENCES "user" ON DELETE CASCADE,
+  creation_time timestamptz DEFAULT CURRENT_TIMESTAMP,
   prices text,
   has_card_discount boolean NOT NULL DEFAULT FALSE,
   has_coupon_discount boolean NOT NULL DEFAULT FALSE,

@@ -13,13 +13,16 @@ export default async function routes(fastify: TFastify) {
     }),
     body: Type.Union([
       Type.Object({
-        prices: Type.Array(
-          Type.Object({
-            limit: Type.Number(),
-            fluctuation: Type.Union([Type.Literal('상승'), Type.Literal('하락')]),
-            unit: Type.Number(),
-          })
-        ),
+        prices: Type.Union([
+          Type.Array(
+            Type.Object({
+              limit: Type.Number(),
+              fluctuation: Type.Union([Type.Literal('상승'), Type.Literal('하락')]),
+              unit: Type.Number(),
+            })
+          ),
+          Type.Null(),
+        ]),
         hasCardDiscount: Type.Boolean(),
         hasCouponDiscount: Type.Boolean(),
         canBuy: Type.Boolean(),
@@ -33,14 +36,15 @@ export default async function routes(fastify: TFastify) {
     if (!user) throw UnauthorizedError('로그인 후 시도해주세요')
 
     const body = req.body
+    const prices = body?.prices
 
     const { rows } = await pool.query<IToggleSubscriptionResult>(toggleSubscription, [
       req.params.id,
       user.id,
-      body?.prices,
-      body?.hasCardDiscount,
-      body?.hasCouponDiscount,
-      body?.canBuy,
+      prices && prices.length > 0 ? prices : null,
+      body?.hasCardDiscount ?? false,
+      body?.hasCouponDiscount ?? false,
+      body?.canBuy ?? false,
     ])
 
     return { isSubscribed: rows[0].result }

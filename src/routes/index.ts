@@ -20,6 +20,7 @@ import {
 import authRoute from './auth'
 import authFlareLaneRoute from './auth/flare-lane'
 import authKakaoRoute from './auth/kakao'
+import notificationRoute from './notification'
 import productRoute from './product'
 import productSubscribeRoute from './product/subscribe'
 import uploadRoute from './upload'
@@ -147,6 +148,7 @@ fastify
   .register(productSubscribeRoute)
   .register(uploadRoute)
   .register(userRoute)
+  .register(notificationRoute)
 
 export default async function startServer() {
   try {
