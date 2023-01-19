@@ -130,6 +130,7 @@ export default async function routes(fastify: TFastify) {
       .then(async ({ rows }) => {
         for (const row of rows) {
           const prices = row.prices ? (JSON.parse(row.prices) as Price[]) : null
+          console.log('👀 - prices', prices)
           const titles = new Set()
           const contents = []
 

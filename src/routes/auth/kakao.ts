@@ -5,10 +5,10 @@ import fetch from 'node-fetch'
 import { KAKAO_ADMIN_KEY, KAKAO_CLIENT_SECRET, KAKAO_REST_API_KEY } from '../../common/constants'
 import { ForbiddenError, UnauthorizedError } from '../../common/fastify'
 import { pool } from '../../common/postgres'
-import { redisClient } from '../../common/redis'
-import { encodeSex, getFrontendUrl } from '../../common/utils'
+import { getFrontendUrl } from '../../common/utils'
 import { IGetKakaoUserResult } from './sql/getKakaoUser'
 import getKakaoUser from './sql/getKakaoUser.sql'
+import removeKakaoOAuth from './sql/removeKakaoOAuth.sql'
 // import getUser from './sql/getUser.sql'
 // import type { IUpdateKakaoUserResult } from './sql/updateKakaoUser'
 // import updateKakaoUser from './sql/updateKakaoUser.sql'
@@ -21,14 +21,12 @@ export default async function routes(fastify: TFastify) {
   fastify.get('/auth/kakao', querystringCode, async (req, res) => {
     const code = req.query.code
 
-    // OAuth 사용자 정보 가져오기
     const kakaoUserToken = await fetchKakaoUserToken(code)
     if (kakaoUserToken.error) throw UnauthorizedError('유효하지 않은 접근입니다')
 
     const kakaoUser = await fetchKakaoUser(kakaoUserToken.access_token)
     if (!kakaoUser.id) throw ForbiddenError('권한이 없습니다')
 
-    // 자유담 사용자 정보 가져오기
     const { rowCount, rows } = await pool.query<IGetKakaoUserResult>(getKakaoUser, [kakaoUser.id])
     const jayudamUser = rows[0]
 
@@ -37,13 +35,13 @@ export default async function routes(fastify: TFastify) {
     // 소셜 로그인 정보가 없는 경우
     if (rowCount === 0) {
       unregisterKakaoUser(kakaoUser.id)
-      return res.redirect(`${frontendUrl}/oauth?isAlreadyAssociatedWithOAuth=false&oauth=kakao`)
+      return res.redirect(`${frontendUrl}/oauth?error=not-kakao-user`)
     }
 
-    // 소셜 로그인 정보가 존재하는 경우
     const querystring = new URLSearchParams({
       jwt: await res.jwtSign({ userId: jayudamUser.id }),
     })
+
     return res.redirect(`${frontendUrl}/oauth?${querystring}`)
   })
 
@@ -94,7 +92,6 @@ export default async function routes(fastify: TFastify) {
     // )
   })
 
-  // Kakao 계정 해제하기
   type OAuthKakaoUnregister = {
     Querystring: {
       user_id: string
@@ -106,27 +103,19 @@ export default async function routes(fastify: TFastify) {
     schema: {
       querystring: Type.Object({
         user_id: Type.String(),
-        referrer_type: Type.String(),
+        referrer_type: Type.Literal('UNLINK_FROM_APPS'),
       }),
     },
   }
 
-  fastify.get<OAuthKakaoUnregister>('/oauth/kakao/unregister', opts3, async (req, res) => {
-    if (req.headers.Authorization !== KAKAO_ADMIN_KEY) return res.status(400).send('Bad Request')
+  fastify.get<OAuthKakaoUnregister>('/auth/kakao/unregister', opts3, async (req, res) => {
+    if (req.headers.Authorization !== `KakaoAK ${KAKAO_ADMIN_KEY}`)
+      return res.status(400).send('Bad Request')
 
     console.log('👀 - req.query.user_id', req.query.user_id)
     console.log('👀 - req.query.referrer_type', req.query.referrer_type)
+    pool.query(removeKakaoOAuth, [req.query.user_id])
   })
-}
-
-async function fetchFromKakao(code: string) {
-  const kakaoUserToken = await fetchKakaoUserToken(code)
-  if (kakaoUserToken.error) return { error: true }
-
-  const kakaoUser = await fetchKakaoUser(kakaoUserToken.access_token)
-  if (kakaoUser.error) return { error: true }
-
-  return kakaoUser
 }
 
 async function fetchKakaoUserToken(code: string) {
