@@ -39,7 +39,7 @@ export default async function routes(fastify: TFastify) {
     }
 
     const querystring = new URLSearchParams({
-      jwt: await res.jwtSign({ userId: jayudamUser.id }),
+      jwt: await res.jwtSign({ id: jayudamUser.id }),
     })
 
     return res.redirect(`${frontendUrl}/oauth?${querystring}`)

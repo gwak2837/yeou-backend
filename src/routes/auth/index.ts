@@ -1,8 +1,6 @@
 import { Type } from '@sinclair/typebox'
 import { FastifyInstance } from 'fastify'
 
-import { UnauthorizedError } from '../../common/fastify'
-
 export default async function routes(fastify: FastifyInstance) {
   fastify.get('/auth', async (request) => {
     const user = request.user
