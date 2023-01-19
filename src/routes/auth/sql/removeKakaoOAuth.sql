@@ -2,6 +2,6 @@
 UPDATE
   "user"
 SET
-  kakao_oauth = NULL
+  oauth_kakao = NULL
 WHERE
-  kakao_oauth = $1;
+  oauth_kakao = $1;

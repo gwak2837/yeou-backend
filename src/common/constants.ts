@@ -10,8 +10,8 @@ export const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY as string
 // export const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY as string
 // export const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY as string
 
-// export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID as string
-// export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET as string
+export const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID as string
+export const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET as string
 export const GOOGLE_CLOUD_STORAGE_BUCKET_NAME = process.env
   .GOOGLE_CLOUD_STORAGE_BUCKET_NAME as string
 // export const GOOGLE_CLOUD_PROJECT = process.env.GOOGLE_CLOUD_PROJECT as string
@@ -21,8 +21,8 @@ export const KAKAO_ADMIN_KEY = process.env.KAKAO_ADMIN_KEY as string
 export const KAKAO_REST_API_KEY = process.env.KAKAO_REST_API_KEY as string
 export const KAKAO_CLIENT_SECRET = process.env.KAKAO_CLIENT_SECRET as string
 
-// export const NAVER_CLIENT_ID = process.env.NAVER_CLIENT_ID as string
-// export const NAVER_CLIENT_SECRET = process.env.NAVER_CLIENT_SECRET as string
+export const NAVER_CLIENT_ID = process.env.NAVER_CLIENT_ID as string
+export const NAVER_CLIENT_SECRET = process.env.NAVER_CLIENT_SECRET as string
 
 export const PGURI = process.env.PGURI as string
 
@@ -38,12 +38,17 @@ if (!PROJECT_ENV) throw new Error('`PROJECT_ENV` 환경 변수를 설정해주�
 if (!FRONTEND_URL) throw new Error('`FRONTEND_URL` 환경 변수를 설정해주세요.')
 if (!JWT_SECRET_KEY) throw new Error('`JWT_SECRET_KEY` 환경 변수를 설정해주세요.')
 
+if (!GOOGLE_CLIENT_ID) throw new Error('`GOOGLE_CLIENT_ID` 환경 변수를 설정해주세요.')
+if (!GOOGLE_CLIENT_SECRET) throw new Error('`GOOGLE_CLIENT_SECRET` 환경 변수를 설정해주세요.')
 if (!GOOGLE_CLOUD_STORAGE_BUCKET_NAME)
   throw new Error('`GOOGLE_CLOUD_STORAGE_BUCKET_NAME` 환경 변수를 설정해주세요.')
 
 if (!KAKAO_ADMIN_KEY) throw new Error('`KAKAO_ADMIN_KEY` 환경 변수를 설정해주세요.')
 if (!KAKAO_REST_API_KEY) throw new Error('`KAKAO_REST_API_KEY` 환경 변수를 설정해주세요.')
 if (!KAKAO_CLIENT_SECRET) throw new Error('`KAKAO_CLIENT_SECRET` 환경 변수를 설정해주세요.')
+
+if (!NAVER_CLIENT_ID) throw new Error('`NAVER_CLIENT_ID` 환경 변수를 설정해주세요.')
+if (!NAVER_CLIENT_SECRET) throw new Error('`NAVER_CLIENT_SECRET` 환경 변수를 설정해주세요.')
 
 if (!PGURI) throw new Error('`PGURI` 환경 변수를 설정해주세요.')
 

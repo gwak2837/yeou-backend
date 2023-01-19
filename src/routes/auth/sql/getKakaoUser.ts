@@ -8,7 +8,6 @@ export type IGetKakaoUserParams = void;
 export interface IGetKakaoUserResult {
   id: string;
   name: string | null;
-  phone_number: string | null;
 }
 
 /** 'GetKakaoUser' query type */
@@ -17,15 +16,14 @@ export interface IGetKakaoUserQuery {
   result: IGetKakaoUserResult;
 }
 
-const getKakaoUserIR: any = {"usedParamSet":{},"params":[],"statement":"SELECT\n  id,\n  name,\n  phone_number\nFROM\n  \"user\"\nWHERE\n  oauth_kakao = $1"};
+const getKakaoUserIR: any = {"usedParamSet":{},"params":[],"statement":"SELECT\n  id,\n  name\nFROM\n  \"user\"\nWHERE\n  oauth_kakao = $1"};
 
 /**
  * Query generated from SQL:
  * ```
  * SELECT
  *   id,
- *   name,
- *   phone_number
+ *   name
  * FROM
  *   "user"
  * WHERE

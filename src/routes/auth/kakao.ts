@@ -5,13 +5,10 @@ import fetch from 'node-fetch'
 import { KAKAO_ADMIN_KEY, KAKAO_CLIENT_SECRET, KAKAO_REST_API_KEY } from '../../common/constants'
 import { ForbiddenError, UnauthorizedError } from '../../common/fastify'
 import { pool } from '../../common/postgres'
-import { getFrontendUrl } from '../../common/utils'
+import { getFrontendURL } from '../../common/utils'
 import { IGetKakaoUserResult } from './sql/getKakaoUser'
 import getKakaoUser from './sql/getKakaoUser.sql'
 import removeKakaoOAuth from './sql/removeKakaoOAuth.sql'
-// import getUser from './sql/getUser.sql'
-// import type { IUpdateKakaoUserResult } from './sql/updateKakaoUser'
-// import updateKakaoUser from './sql/updateKakaoUser.sql'
 import { querystringCode, querystringCodeState } from '.'
 import { TFastify } from '..'
 
@@ -28,21 +25,22 @@ export default async function routes(fastify: TFastify) {
     if (!kakaoUser.id) throw ForbiddenError('권한이 없습니다')
 
     const { rowCount, rows } = await pool.query<IGetKakaoUserResult>(getKakaoUser, [kakaoUser.id])
-    const jayudamUser = rows[0]
+    const user = rows[0]
 
-    const frontendUrl = getFrontendUrl(req.headers.referer)
+    const frontendURL = getFrontendURL(req.headers.referer)
 
     // 소셜 로그인 정보가 없는 경우
     if (rowCount === 0) {
       unregisterKakaoUser(kakaoUser.id)
-      return res.redirect(`${frontendUrl}/oauth?error=not-kakao-user`)
+      return res.redirect(`${frontendURL}/oauth?error=not-kakao-user`)
     }
 
     const querystring = new URLSearchParams({
-      jwt: await res.jwtSign({ id: jayudamUser.id }),
+      jwt: await res.jwtSign({ id: user.id }),
+      ...(user.name && { username: user.name }),
     })
 
-    return res.redirect(`${frontendUrl}/oauth?${querystring}`)
+    return res.redirect(`${frontendURL}/oauth?${querystring}`)
   })
 
   fastify.get('/auth/kakao/register', querystringCodeState, async (req, res) => {

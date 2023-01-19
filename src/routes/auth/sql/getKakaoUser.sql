@@ -1,10 +1,8 @@
 /* @name getKakaoUser */
 SELECT
   id,
-  name,
-  phone_number
+  name
 FROM
   "user"
 WHERE
   oauth_kakao = $1;
-

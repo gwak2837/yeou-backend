@@ -1,13 +1,19 @@
 /** Types generated for queries found in "src/routes/auth/sql/removeKakaoOAuth.sql" */
 import { PreparedQuery } from '@pgtyped/query';
 
-/** Query 'RemoveKakaoOAuth' is invalid, so its result is assigned type 'never' */
-export type IRemoveKakaoOAuthResult = never;
+/** 'RemoveKakaoOAuth' parameters type */
+export type IRemoveKakaoOAuthParams = void;
 
-/** Query 'RemoveKakaoOAuth' is invalid, so its parameters are assigned type 'never' */
-export type IRemoveKakaoOAuthParams = never;
+/** 'RemoveKakaoOAuth' return type */
+export type IRemoveKakaoOAuthResult = void;
 
-const removeKakaoOAuthIR: any = {"usedParamSet":{},"params":[],"statement":"UPDATE\n  \"user\"\nSET\n  kakao_oauth = NULL\nWHERE\n  kakao_oauth = $1"};
+/** 'RemoveKakaoOAuth' query type */
+export interface IRemoveKakaoOAuthQuery {
+  params: IRemoveKakaoOAuthParams;
+  result: IRemoveKakaoOAuthResult;
+}
+
+const removeKakaoOAuthIR: any = {"usedParamSet":{},"params":[],"statement":"UPDATE\n  \"user\"\nSET\n  oauth_kakao = NULL\nWHERE\n  oauth_kakao = $1"};
 
 /**
  * Query generated from SQL:
@@ -15,9 +21,9 @@ const removeKakaoOAuthIR: any = {"usedParamSet":{},"params":[],"statement":"UPDA
  * UPDATE
  *   "user"
  * SET
- *   kakao_oauth = NULL
+ *   oauth_kakao = NULL
  * WHERE
- *   kakao_oauth = $1
+ *   oauth_kakao = $1
  * ```
  */
 export const removeKakaoOAuth = new PreparedQuery<IRemoveKakaoOAuthParams,IRemoveKakaoOAuthResult>(removeKakaoOAuthIR);

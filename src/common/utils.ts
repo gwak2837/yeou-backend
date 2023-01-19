@@ -2,7 +2,7 @@ import { FRONTEND_URL } from './constants'
 
 const vercelURLRegEx = /^https:\/\/jayudam-[-a-z0-9]{1,20}-gwak2837\.vercel\.app\//
 
-export function getFrontendUrl(referer?: string) {
+export function getFrontendURL(referer?: string) {
   if (!referer) return FRONTEND_URL
 
   // dev, feature, fix 브랜치 배포 주소

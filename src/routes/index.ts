@@ -19,7 +19,9 @@ import {
 } from '../common/constants'
 import authRoute from './auth'
 import authFlareLaneRoute from './auth/flare-lane'
+import authGoogleRoute from './auth/google'
 import authKakaoRoute from './auth/kakao'
+import authNaverRoute from './auth/naver'
 import notificationRoute from './notification'
 import productRoute from './product'
 import productSubscribeRoute from './product/subscribe'
@@ -142,7 +144,9 @@ fastify.get('/', schema, async (request, _) => {
 
 fastify
   .register(authRoute)
+  .register(authGoogleRoute)
   .register(authKakaoRoute)
+  .register(authNaverRoute)
   .register(authFlareLaneRoute)
   .register(productRoute)
   .register(productSubscribeRoute)
