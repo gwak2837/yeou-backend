@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify'
 
-import { UnauthorizedError } from '../common/fastify'
+import { UnauthorizedError } from '../../common/fastify'
 
 export default async function routes(fastify: FastifyInstance, options: object) {
   fastify.get('/user', async (request, reply) => {

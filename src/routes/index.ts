@@ -161,7 +161,7 @@ export default async function startServer() {
       host: K_SERVICE || PROJECT_ENV === 'local-docker' ? '0.0.0.0' : 'localhost',
     })
   } catch (err) {
-    fastify.log.error(err)
+    console.error(err)
     throw new Error()
   }
 }

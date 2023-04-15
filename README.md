@@ -170,9 +170,9 @@ CREATE USER 사용자이름 WITH PASSWORD '사용자비밀번호';
 \du
 CREATE DATABASE DB이름 OWNER 사용자이름 TEMPLATE template0 LC_COLLATE "C" LC_CTYPE "ko_KR.UTF-8";
 \l
-\c DB이름 DB관리자이름
 ALTER SCHEMA public OWNER TO 사용자이름;
 \dn
+\c DB이름 DB관리자이름
 ```
 
 그리고 아래 스크립트를 실행하거나 수동으로 데이터베이스에 더미 데이터를 넣어줍니다.
